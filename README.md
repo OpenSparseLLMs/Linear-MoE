@@ -40,11 +40,11 @@ We recommend using the latest release of [NGC's PyTorch container](https://ngc.n
 
 On the top of NGC's PyTorch container, you can setup Linear-MoE with:
 ```bash
-# requirements
-pip install -r requirements.txt
-
 # Linear-MoE 
 git clone --recurse-submodules https://github.com/weigao266/Linear-MoE-public.git
+
+# requirements
+pip install -r requirements.txt
 ```
 
 If you can't use this for some reason, try installing in a Virtualenv.
@@ -53,8 +53,9 @@ If you can't use this for some reason, try installing in a Virtualenv.
 
 ```bash
 # create a conda env, install PyTorch
-conda create -n linear-moe python=3.xx
-conda install pytorch pytorch-cuda=12.x -c pytorch -c nvidia
+conda create -n linear-moe python=3.11
+conda activate linear-moe
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 
 # some nessesary Python packages
 pip install six regex packaging
@@ -73,11 +74,11 @@ MAX_JOBS=8 pip install flash-attn --no-build-isolation
 git clone https://github.com/Dao-AILab/flash-attention.git
 cd flash-attention/csrc/layer_norm & pip install .
 
-# requirements
-pip install -r requirements.txt
-
 # Linear-MoE 
 git clone --recurse-submodules https://github.com/weigao266/Linear-MoE-public.git
+
+# requirements
+pip install -r requirements.txt
 ```
 
 # Usage
