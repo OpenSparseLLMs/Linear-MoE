@@ -59,7 +59,7 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
     config = core_transformer_config_from_args(args, Qwen2TransformerConfig)
     use_te = args.transformer_impl == "transformer_engine"
 
-    if args.use_la_module:
+    if args.sequence_modeling_type:
         if args.la_module == "mamba2":
             mamba_stack_spec = get_hybrid_mamba2_stack_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
         elif args.la_module == "retention":
@@ -85,7 +85,7 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
         else:
             transformer_layer_spec = get_gpt_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
 
-    if args.use_la_module:
+    if args.sequence_modeling_type:
         if args.la_module in ["mamba2"]:
             model = MambaModel(
                 config=config,

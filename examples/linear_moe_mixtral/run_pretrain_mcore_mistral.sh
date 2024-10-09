@@ -34,14 +34,14 @@ OUTPUT_BASEPATH=./output
 
 # # SSM
 # linear_moe_options=" \
-#         --use-la-module \
+#         --sequence-modeling-type \
 #         --la-module pure_mamba2 \
 #         --base-model mixtral \
 #         "
 
 # Linear Attention
 linear_moe_options=" \
-        --use-la-module \
+        --sequence-modeling-type \
         --la-module deltanet \
         --la-mode chunk \
         --base-model mixtral \
@@ -52,7 +52,7 @@ linear_moe_options=" \
 
 # # Linear RNN
 # linear_moe_options=" \
-#         --use-la-module \
+#         --sequence-modeling-type \
 #         --la-module rwkv6 \
 #         --la-mode chunk \
 #         --base-model mixtral \
@@ -284,7 +284,7 @@ set +x
 # note
 
 # linear_moe_options=" \
-#         --use-la-module \
+#         --sequence-modeling-type \
 #         --la-module retention \
 #         "
 

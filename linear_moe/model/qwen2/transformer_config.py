@@ -38,7 +38,7 @@ class Qwen2TransformerConfig(TransformerConfig):
 
     moe_aux_loss_coeff: float = 0.0
 
-    use_la_module: bool = False
+    sequence_modeling_type: str = None
 
     la_module: str = None
 

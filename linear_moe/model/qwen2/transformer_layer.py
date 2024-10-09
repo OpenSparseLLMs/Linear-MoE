@@ -90,7 +90,7 @@ class TransformerLayer(MegatronModule, BaseTransformerLayer):
             eps=self.config.layernorm_epsilon,
         )
 
-        if self.config.use_la_module:
+        if self.config.sequence_modeling_type:
             ## [Module 2: Linear Attention]
             self.self_attention = build_module(
                 submodules.self_attention,
@@ -194,7 +194,7 @@ class TransformerLayer(MegatronModule, BaseTransformerLayer):
         # Optional Input Layer norm
         input_layernorm_output = self.input_layernorm(hidden_states)
 
-        if self.config.use_la_module:
+        if self.config.sequence_modeling_type:
             # linear attention.
             attention_output_with_bias = self.self_attention(
                 input_layernorm_output,

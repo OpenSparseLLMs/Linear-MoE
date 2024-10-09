@@ -459,15 +459,14 @@ def get_patch_args(parser):
     )
 
     group.add_argument(
-        '--use-la-module',
-        action='store_true',
-        help=
-        ('If True, use la module.'),
+        '--sequence-modeling-type',
+        type=str,
+        default='linear_attention',
     )
 
     group.add_argument('--la-module',
                        type=str,
-                       default='mamba2')
+                       default='basic_linear_attention')
 
     group.add_argument('--la-mode',
                        type=str,

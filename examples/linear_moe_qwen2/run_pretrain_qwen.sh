@@ -9,6 +9,9 @@ export PYTHONPATH=${MEGATRON_PATH}:${LINEAR_MOE_PATH}:$PYTHONPATH
 export CUDA_DEVICE_MAX_CONNECTIONS=1
 export HF_ENDPOINT=https://hf-mirror.com
 
+BASE_MODEL="qwen2"
+source config.env
+
 ENV=dsw
 MODEL_SIZE=A1B
 BATCH_SIZE=1
@@ -33,43 +36,6 @@ TRAIN_TOKENS=100000000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
-LA_MODULE="gla"
-BASE_MODEL="qwen2"
-LAYER_TYPE_LIST="LLLNLLLNLLLNLLLN"
-# LAYER_TYPE_LIST="LLLLLLLLLLLLLLLL"
-
-# Only for Mamba2
-HYBRID_ATTENTION_RATIO=0.2
-HYBRID_MLP_RATIO=0.2
-
-# # SSM
-# linear_moe_options=" \
-#         --use-la-module \
-#         --la-module ${LA_MODULE} \
-#         --base-model ${BASE_MODEL} \
-#         "
-
-# Linear Attention
-linear_moe_options=" \
-        --use-la-module \
-        --la-module ${LA_MODULE} \
-        --la-mode chunk \
-        --base-model ${BASE_MODEL} \
-        --la-feature-map swish \
-        --la-output-norm rmsnorm \
-        --la-gate-fn swish \
-        --layer-type-list ${LAYER_TYPE_LIST} \
-        "
-
-# # Linear RNN
-# linear_moe_options=" \
-#         --use-la-module \
-#         --la-module ${LA_MODULE} \
-#         --la-mode chunk \
-#         --base-model ${BASE_MODEL} \
-#         --la-output-norm rmsnorm \
-#         --la-gate-fn swish \
-#         "
 
 if [ $ENV = dsw ]; then
 export CUDA_VISIBLE_DEVICES=0,1

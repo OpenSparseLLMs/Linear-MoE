@@ -42,14 +42,14 @@ HYBRID_MLP_RATIO=0.2
 
 # # SSM
 # linear_moe_options=" \
-#         --use-la-module \
+#         --sequence-modeling-type \
 #         --la-module ${LA_MODULE} \
 #         --base-model ${BASE_MODEL} \
 #         "
 
 # Linear Attention
 linear_moe_options=" \
-        --use-la-module \
+        --sequence-modeling-type \
         --la-module ${LA_MODULE} \
         --la-mode chunk \
         --base-model ${BASE_MODEL} \
@@ -61,7 +61,7 @@ linear_moe_options=" \
 
 # # Linear RNN
 # linear_moe_options=" \
-#         --use-la-module \
+#         --sequence-modeling-type \
 #         --la-module ${LA_MODULE} \
 #         --la-mode chunk \
 #         --base-model ${BASE_MODEL} \

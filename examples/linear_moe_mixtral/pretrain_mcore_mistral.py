@@ -66,7 +66,7 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
     build_tokenizer(args)
     config = core_transformer_config_from_args(args, MixtralTransformerConfig)
 
-    if args.use_la_module:
+    if args.sequence_modeling_type:
         if args.la_module == "pure_mamba2":
             mamba_stack_spec = get_pure_mamba2_stack_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
         if args.la_module == "hybrid_mamba2":
