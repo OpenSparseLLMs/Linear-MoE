@@ -51,11 +51,11 @@ HYBRID_MLP_RATIO=0.2
 linear_sequence_modeling_options=" \
         --sequence-modeling-type \
         --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
-        --la-mode chunk \
+        --lsm-mode chunk \
         --base-model ${BASE_MODEL} \
-        --la-feature-map swish \
-        --la-output-norm rmsnorm \
-        --la-gate-fn swish \
+        --lsm-feature-map swish \
+        --lsm-output-norm rmsnorm \
+        --lsm-gate-fn swish \
         --layer-type-list ${LAYER_TYPE_LIST} \
         "
 
@@ -63,10 +63,10 @@ linear_sequence_modeling_options=" \
 # linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
 #         --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
-#         --la-mode chunk \
+#         --lsm-mode chunk \
 #         --base-model ${BASE_MODEL} \
-#         --la-output-norm rmsnorm \
-#         --la-gate-fn swish \
+#         --lsm-output-norm rmsnorm \
+#         --lsm-gate-fn swish \
 #         "
 
 if [ $ENV = dsw ]; then

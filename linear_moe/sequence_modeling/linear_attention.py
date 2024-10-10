@@ -34,7 +34,7 @@ class LinearAttention(MegatronModule):
         self.value_dim = int(self.config.hidden_size * self.config.expand_v)
         self.head_dim = self.config.kv_channels
         self.num_heads = self.config.num_attention_heads
-        self.la_gate_fn = self.config.la_gate_fn
+        self.lsm_gate_fn = self.config.lsm_gate_fn
 
         self.qkv_proj = build_module(
             submodules.qkv_proj,
@@ -90,7 +90,7 @@ class LinearAttention(MegatronModule):
             tp_comm_buffer_name='proj',
         )
         
-        self.la_gate_fn = ACT2FN[self.la_gate_fn]
+        self.lsm_gate_fn = ACT2FN[self.lsm_gate_fn]
 
     def forward(
         self,
@@ -185,7 +185,7 @@ class LinearAttention(MegatronModule):
             )
         
         # o: n b (h d)
-        o = o * self.la_gate_fn(o_gate)
+        o = o * self.lsm_gate_fn(o_gate)
         o, bias = self.o_proj(o)
 
         return o, bias

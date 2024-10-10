@@ -21,40 +21,40 @@ class Retention(MegatronModule):
     ):
         super().__init__(config)
         
-        self.la_mode = config.la_mode
+        self.lsm_mode = config.lsm_mode
         self.hidden_size = config.hidden_size
         self.num_heads = config.num_attention_heads
         # num_kv_heads here mains num_query_groups
         self.num_kv_heads = config.num_query_groups if config.num_query_groups is not None else config.num_attention_heads
         self.num_kv_groups = self.num_heads // self.num_kv_heads
         
-        self.la_feature_map = config.la_feature_map
-        self.la_feature_map_fn = ACT2FN[self.la_feature_map] if self.la_feature_map is not None else None
+        self.lsm_feature_map = config.lsm_feature_map
+        self.la_feature_map_fn = ACT2FN[self.lsm_feature_map] if self.lsm_feature_map is not None else None
 
         self.key_dim = int(config.hidden_size * expand_k)
         self.value_dim = int(config.hidden_size * expand_v)
 
-        assert self.la_mode in ['chunk', 'fused_chunk', 'parallel', 'fused_recurrent'], f"Not supported mode `{self.la_mode}`."
+        assert self.lsm_mode in ['chunk', 'fused_chunk', 'parallel', 'fused_recurrent'], f"Not supported mode `{self.lsm_mode}`."
         assert self.key_dim % self.num_heads == 0, f"key dim must be divisible by num_heads of {self.num_heads}"
         assert self.value_dim % self.num_heads == 0, f"value dim must be divisible by num_heads of {self.num_heads}"
         
         self.head_qk_dim = self.key_dim // self.num_heads
         self.head_v_dim = self.value_dim // self.num_heads
 
-        if config.la_output_norm == 'rmsnorm':
-            self.la_output_norm = RMSNorm(hidden_size=self.head_v_dim, elementwise_affine=config.la_elementwise_affine, eps=config.la_norm_eps)
-        elif config.la_output_norm == 'identity':
-            self.la_output_norm = torch.nn.Identity()
+        if config.lsm_output_norm == 'rmsnorm':
+            self.lsm_output_norm = RMSNorm(hidden_size=self.head_v_dim, elementwise_affine=config.la_elementwise_affine, eps=config.la_norm_eps)
+        elif config.lsm_output_norm == 'identity':
+            self.lsm_output_norm = torch.nn.Identity()
         else:
-            raise NotImplementedError(f"Not supported output norm `{self.la_output_norm}`.")
+            raise NotImplementedError(f"Not supported output norm `{self.lsm_output_norm}`.")
         
-        if self.la_mode == 'chunk':
+        if self.lsm_mode == 'chunk':
             self._la_impl = chunk_retention
-        elif self.la_mode == 'fused_chunk':
+        elif self.lsm_mode == 'fused_chunk':
             self._la_impl = fused_chunk_retention
-        elif self.la_mode == 'fused_recurrent':
+        elif self.lsm_mode == 'fused_recurrent':
             self._la_impl = fused_recurrent_retention
-        elif self.la_mode == 'parallel':
+        elif self.lsm_mode == 'parallel':
             self._la_impl = parallel_retention
         
         self.apply(self._initialize_weights)
@@ -83,7 +83,7 @@ class Retention(MegatronModule):
 
         # expects q: B, H, T, K
         output, _ = self._la_impl(q, k, v)
-        output = self.la_output_norm(output)
+        output = self.lsm_output_norm(output)
 
         output = rearrange(output, 'b h n d -> n b (h d)')
 

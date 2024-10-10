@@ -15,11 +15,11 @@ source ${LINEAR_MOE_PATH}/examples/config_linear_attention.env
 linear_sequence_modeling_options=" \
         --sequence-modeling-type ${SEQUENCE_MODELING_TYPE} \
         --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
-        --la-mode ${LA_MODE} \
+        --lsm-mode ${LSM_MODE} \
         --base-model ${BASE_MODEL} \
-        --la-feature-map ${LA_FEATURE_MAP} \
-        --la-output-norm ${LA_OUTPUT_NORM} \
-        --la-gate-fn ${LA_GATE_FN} \
+        --lsm-feature-map ${LSM_FEATURE_MAP} \
+        --lsm-output-norm ${LSM_OUTPUT_NORM} \
+        --lsm-gate-fn ${LSM_GATE_FN} \
         --layer-type-list ${LAYER_TYPE_LIST} \
         "
 

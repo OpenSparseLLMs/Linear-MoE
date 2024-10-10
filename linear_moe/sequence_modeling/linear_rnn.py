@@ -45,7 +45,7 @@ class LinearRNN(MegatronModule):
         self.rwkv6_la_proj_low_rank_dim = self.config.rwkv6_la_proj_low_rank_dim
         self.head_qk_dim = self.key_dim // self.num_heads
         
-        self.la_gate_fn = self.config.la_gate_fn
+        self.lsm_gate_fn = self.config.lsm_gate_fn
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
         
         if config.hidden_size is not None and config.num_attention_heads is not None:
@@ -141,7 +141,7 @@ class LinearRNN(MegatronModule):
                 self.hidden_size,
                 bias=False,
             )
-        self.la_gate_fn = ACT2FN[self.la_gate_fn]
+        self.lsm_gate_fn = ACT2FN[self.lsm_gate_fn]
 
     def forward(
         self,
@@ -189,7 +189,7 @@ class LinearRNN(MegatronModule):
                 scale,
             )
             # expect computation in [n b (h d)]
-            o = o * self.la_gate_fn(rearrange(g, 'b n (h d) -> n b (h d)', h=self.num_heads))
+            o = o * self.lsm_gate_fn(rearrange(g, 'b n (h d) -> n b (h d)', h=self.num_heads))
         
         elif self.sequence_modeling_module == 'hgrn2':
             q = self.q_proj(hidden_states)

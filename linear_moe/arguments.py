@@ -469,7 +469,7 @@ def get_patch_args(parser):
                        type=str,
                        default='basic_linear_attention')
 
-    group.add_argument('--la-mode',
+    group.add_argument('--lsm-mode',
                        type=str,
                        default='chunk')
 
@@ -477,7 +477,7 @@ def get_patch_args(parser):
                        type=str,
                        default='qwen2')
 
-    group.add_argument('--la-feature-map',
+    group.add_argument('--lsm-feature-map',
                        type=str,
                        default=None)
 
@@ -506,7 +506,7 @@ def get_patch_args(parser):
         action='store_true',
     )
 
-    group.add_argument('--la-output-norm',
+    group.add_argument('--lsm-output-norm',
                        type=str,
                        default='rmsnorm')
 
@@ -547,7 +547,7 @@ def get_patch_args(parser):
         default=64
     )
     
-    group.add_argument('--la-gate-fn',
+    group.add_argument('--lsm-gate-fn',
                        type=str,
                        default='swish')
     

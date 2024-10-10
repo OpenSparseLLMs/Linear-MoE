@@ -43,21 +43,21 @@ OUTPUT_BASEPATH=./output
 linear_sequence_modeling_options=" \
         --sequence-modeling-type \
         --sequence-modeling-module deltanet \
-        --la-mode chunk \
+        --lsm-mode chunk \
         --base-model mixtral \
-        --la-feature-map swish \
-        --la-output-norm rmsnorm \
-        --la-gate-fn swish \
+        --lsm-feature-map swish \
+        --lsm-output-norm rmsnorm \
+        --lsm-gate-fn swish \
         "
 
 # # Linear RNN
 # linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
 #         --sequence-modeling-module rwkv6 \
-#         --la-mode chunk \
+#         --lsm-mode chunk \
 #         --base-model mixtral \
-#         --la-output-norm groupnorm \
-#         --la-gate-fn swish \
+#         --lsm-output-norm groupnorm \
+#         --lsm-gate-fn swish \
 #         "
 
 if [ $ENV = dsw ]; then

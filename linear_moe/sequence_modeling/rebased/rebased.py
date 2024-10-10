@@ -23,7 +23,7 @@ class Rebased(MegatronModule):
     ):
         super().__init__(config)
         
-        self.la_mode = config.la_mode
+        self.lsm_mode = config.lsm_mode
         self.hidden_size = config.hidden_size
         self.key_dim = int(config.hidden_size * expand_k)
         self.value_dim = int(config.hidden_size * expand_v)
@@ -37,15 +37,15 @@ class Rebased(MegatronModule):
         self.la_feature_map_fn = RebasedFeatureMap(self.head_qk_dim, use_gamma, use_beta, normalize)
         
 
-        assert self.la_mode in ['chunk', 'fused_chunk', 'parallel'], f"Not supported mode `{self.la_mode}`."
+        assert self.lsm_mode in ['chunk', 'fused_chunk', 'parallel'], f"Not supported mode `{self.lsm_mode}`."
         assert self.key_dim % self.num_heads == 0, f"key dim must be divisible by num_heads of {self.num_heads}"
         assert self.value_dim % self.num_heads == 0, f"value dim must be divisible by num_heads of {self.num_heads}"
         
-        if self.la_mode == 'chunk':
+        if self.lsm_mode == 'chunk':
             self._la_impl = chunk_linear_attn
-        elif self.la_mode == 'fused_chunk':
+        elif self.lsm_mode == 'fused_chunk':
             self._la_impl = fused_chunk_linear_attn
-        elif self.la_mode == 'parallel':
+        elif self.lsm_mode == 'parallel':
             self._la_impl = parallel_rebased
         
         self.apply(self._initialize_weights)
@@ -69,12 +69,12 @@ class Rebased(MegatronModule):
         # torch.Size([128, 4, 16, 32])
         q, k, v = (rearrange(x, 'n b h d -> b h n d') for x in (q, k, v))
 
-        q, k = self.la_feature_map_fn(q, flatten=(self.la_mode != 'parallel')), self.la_feature_map_fn(k, flatten=(self.la_mode != 'parallel'))
+        q, k = self.la_feature_map_fn(q, flatten=(self.lsm_mode != 'parallel')), self.la_feature_map_fn(k, flatten=(self.lsm_mode != 'parallel'))
 
         # expects q: B, H, T, K
-        if self.la_mode in ['chunk', 'fused_chunk']:
+        if self.lsm_mode in ['chunk', 'fused_chunk']:
             output, _ = self._la_impl(q, k, v, normalize=True, scale=1)
-        elif self.la_mode == 'parallel':
+        elif self.lsm_mode == 'parallel':
             assert q.shape[-1] <= 128
             output, _ = self._la_impl(q, k, v, self.la_eps, True, True)
 

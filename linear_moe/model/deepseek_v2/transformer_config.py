@@ -35,11 +35,11 @@ class DeepSeekV2TransformerConfig(TransformerConfig):
 
     sequence_modeling_module: str = None
 
-    la_mode: str = None
+    lsm_mode: str = None
 
     base_model: str = None
 
-    la_feature_map: str = None
+    lsm_feature_map: str = None
     
     la_tie_feature_map_qk:  bool = False
     
@@ -49,7 +49,7 @@ class DeepSeekV2TransformerConfig(TransformerConfig):
     
     la_do_feature_map_norm:  bool = False
     
-    la_output_norm:  str = None
+    lsm_output_norm:  str = None
 
     la_checkpointing:  bool = False
     
@@ -67,7 +67,7 @@ class DeepSeekV2TransformerConfig(TransformerConfig):
     
     rwkv6_la_gate_low_rank_dim: int = 64
     
-    la_gate_fn: str = 'swish'
+    lsm_gate_fn: str = 'swish'
     
     expand_k: float = 1.0
     
