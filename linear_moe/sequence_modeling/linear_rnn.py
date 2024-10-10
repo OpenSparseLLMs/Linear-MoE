@@ -35,7 +35,7 @@ class LinearRNN(MegatronModule):
     ):
         super().__init__(config)
         self.config = config
-        self.la_module = config.la_module
+        self.sequence_modeling_module = config.sequence_modeling_module
         self.num_heads = config.num_attention_heads
 
         self.head_dim = self.config.kv_channels
@@ -54,7 +54,7 @@ class LinearRNN(MegatronModule):
         self.forget_dim = int(self.num_heads * self.expand_ratio)
         self.input_dim = self.hidden_size
         
-        if self.la_module == 'rwkv6':
+        if self.sequence_modeling_module == 'rwkv6':
             self.x_proj = nn.Sequential(
                 LerpLinear(self.hidden_size, self.rwkv6_la_proj_low_rank_dim * 5),
                 nn.Tanh(),
@@ -108,7 +108,7 @@ class LinearRNN(MegatronModule):
                 expand_v=self.config.expand_v,
             )
             
-        elif self.la_module == 'hgrn2':
+        elif self.sequence_modeling_module == 'hgrn2':
             self.q_proj = build_module(
                 submodules.q_proj,
                 self.hidden_size,
@@ -154,7 +154,7 @@ class LinearRNN(MegatronModule):
         # hidden_states: n, b, (h d)
         hidden_states = rearrange(hidden_states, 'n b (h d) -> b n (h d)', h=self.num_heads)
         
-        if self.la_module == 'rwkv6':
+        if self.sequence_modeling_module == 'rwkv6':
             batch_size, seq_len, hidden_size = hidden_states.shape
             if attention_mask is not None:
                 hidden_states = hidden_states.mul_(attention_mask.unsqueeze(-1))
@@ -191,7 +191,7 @@ class LinearRNN(MegatronModule):
             # expect computation in [n b (h d)]
             o = o * self.la_gate_fn(rearrange(g, 'b n (h d) -> n b (h d)', h=self.num_heads))
         
-        elif self.la_module == 'hgrn2':
+        elif self.sequence_modeling_module == 'hgrn2':
             q = self.q_proj(hidden_states)
             f = self.f_proj(hidden_states)
             i = self.i_proj(hidden_states)

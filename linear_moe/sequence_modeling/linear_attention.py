@@ -27,7 +27,7 @@ class LinearAttention(MegatronModule):
     ):
         super().__init__(config)
         self.config = config
-        self.la_module = self.config.la_module
+        self.sequence_modeling_module = self.config.sequence_modeling_module
         self.hidden_size = self.config.hidden_size
         self.query_dim = self.config.hidden_size
         self.key_dim = int(self.config.hidden_size * self.config.expand_k)
@@ -61,13 +61,13 @@ class LinearAttention(MegatronModule):
             is_expert=False,
         )
         
-        if self.la_module == 'gla':
+        if self.sequence_modeling_module == 'gla':
             self.gk_proj = build_module(
                 submodules.gk_proj,
                 self.config,
             )
         
-        if self.la_module == 'deltanet':
+        if self.sequence_modeling_module == 'deltanet':
             self.beta_proj = torch.nn.Linear(self.hidden_size, self.num_heads, bias=False)
         
         self.core_linear_attention = build_module(
@@ -102,12 +102,12 @@ class LinearAttention(MegatronModule):
 
         qkv, _ = self.qkv_proj(hidden_states)
         o_gate, _ = self.o_gate_proj(hidden_states)
-        if self.la_module == 'gla':
+        if self.sequence_modeling_module == 'gla':
             gk = self.gk_proj(hidden_states)
         else:
             gk = None
         
-        if self.la_module == 'deltanet':
+        if self.sequence_modeling_module == 'deltanet':
             beta = rearrange(self.beta_proj(hidden_states), 'b n h -> b h n').sigmoid()
         else:
             beta = None
@@ -163,14 +163,14 @@ class LinearAttention(MegatronModule):
             # value_layer = apply_rotary_pos_emb(value_layer, k_pos_emb)
         
         # expect q: n b h d
-        if self.la_module == 'gla':
+        if self.sequence_modeling_module == 'gla':
             o = self.core_linear_attention(
                 q=q,
                 k=k,
                 v=v,
                 gk=gk,
             )
-        elif self.la_module == 'deltanet':
+        elif self.sequence_modeling_module == 'deltanet':
             o = self.core_linear_attention(
                 q=q,
                 k=k,

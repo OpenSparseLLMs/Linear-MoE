@@ -32,7 +32,7 @@ TRAIN_TOKENS=100000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
-LA_MODULE="retention"
+SEQUENCE_MODELING_MODULE="retention"
 BASE_MODEL="deepseekv2"
 LAYER_TYPE_LIST="LLLNLLLNLLLNLLLN"
 
@@ -41,16 +41,16 @@ HYBRID_ATTENTION_RATIO=0.2
 HYBRID_MLP_RATIO=0.2
 
 # # SSM
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module ${LA_MODULE} \
+#         --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
 #         --base-model ${BASE_MODEL} \
 #         "
 
 # Linear Attention
-linear_moe_options=" \
+linear_sequence_modeling_options=" \
         --sequence-modeling-type \
-        --la-module ${LA_MODULE} \
+        --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
         --la-mode chunk \
         --base-model ${BASE_MODEL} \
         --la-feature-map swish \
@@ -60,9 +60,9 @@ linear_moe_options=" \
         "
 
 # # Linear RNN
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module ${LA_MODULE} \
+#         --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
 #         --la-mode chunk \
 #         --base-model ${BASE_MODEL} \
 #         --la-output-norm rmsnorm \
@@ -302,7 +302,7 @@ DISTRIBUTED_ARGS="--nproc_per_node $GPUS_PER_NODE --nnodes $NNODES --node_rank $
 
 
 run_cmd="torchrun $DISTRIBUTED_ARGS pretrain_deepseek.py
- ${megatron_options} ${pr_options} ${load_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${moe_options} ${linear_moe_options} 2>&1 | sudo tee -a $LOG_FILE"
+ ${megatron_options} ${pr_options} ${load_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${moe_options} ${linear_sequence_modeling_options} 2>&1 | sudo tee -a $LOG_FILE"
 
 echo ${run_cmd}
 eval ${run_cmd}

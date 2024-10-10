@@ -66,31 +66,31 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
     build_tokenizer(args)
     config = core_transformer_config_from_args(args, MixtralTransformerConfig)
 
-    if args.sequence_modeling_type:
-        if args.la_module == "pure_mamba2":
+    if args.sequence_modeling_type != "attention":
+        if args.sequence_modeling_module == "pure_mamba2":
             mamba_stack_spec = get_pure_mamba2_stack_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        if args.la_module == "hybrid_mamba2":
+        if args.sequence_modeling_module == "hybrid_mamba2":
             mamba_stack_spec = get_hybrid_mamba2_stack_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "retention":
+        elif args.sequence_modeling_module == "retention":
             transformer_layer_spec = get_retention_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "based":
+        elif args.sequence_modeling_module == "based":
             transformer_layer_spec = get_based_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "rebased":
+        elif args.sequence_modeling_module == "rebased":
             transformer_layer_spec = get_rebased_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "linear_attention":
+        elif args.sequence_modeling_module == "linear_attention":
             transformer_layer_spec = get_basic_linear_attention_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "gla":
+        elif args.sequence_modeling_module == "gla":
             transformer_layer_spec = get_gla_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "deltanet":
+        elif args.sequence_modeling_module == "deltanet":
             transformer_layer_spec = get_deltanet_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "rwkv6":
+        elif args.sequence_modeling_module == "rwkv6":
             transformer_layer_spec = get_rwkv6_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
-        elif args.la_module == "hgrn2":
+        elif args.sequence_modeling_module == "hgrn2":
             transformer_layer_spec = get_hgrn2_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm)
     else:
         transformer_layer_spec = get_gpt_layer_with_transformer_engine_spec(args.num_experts, args.moe_grouped_gemm)
 
-    if args.la_module in ["pure_mamba2", "hybrid_mamba2"]:
+    if args.sequence_modeling_module in ["pure_mamba2", "hybrid_mamba2"]:
         model = MambaModel(
             config=config,
             mamba_stack_spec=mamba_stack_spec,

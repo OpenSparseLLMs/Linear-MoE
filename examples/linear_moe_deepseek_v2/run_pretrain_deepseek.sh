@@ -33,16 +33,16 @@ WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
 # # SSM
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module pure_mamba2 \
+#         --sequence-modeling-module pure_mamba2 \
 #         --base-model deepseekv2 \
 #         "
 
 # Linear Attention
-linear_moe_options=" \
+linear_sequence_modeling_options=" \
         --sequence-modeling-type \
-        --la-module deltanet \
+        --sequence-modeling-module deltanet \
         --la-mode chunk \
         --base-model deepseekv2 \
         --la-feature-map swish \
@@ -51,9 +51,9 @@ linear_moe_options=" \
         "
 
 # # Linear RNN
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module rwkv6 \
+#         --sequence-modeling-module rwkv6 \
 #         --la-mode chunk \
 #         --base-model deepseekv2 \
 #         --la-output-norm groupnorm \
@@ -293,7 +293,7 @@ DISTRIBUTED_ARGS="--nproc_per_node $GPUS_PER_NODE --nnodes $NNODES --node_rank $
 
 
 run_cmd="torchrun $DISTRIBUTED_ARGS pretrain_deepseek.py
- ${megatron_options} ${pr_options} ${load_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${moe_options} ${linear_moe_options} 2>&1 | sudo tee -a $LOG_FILE"
+ ${megatron_options} ${pr_options} ${load_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${moe_options} ${linear_sequence_modeling_options} 2>&1 | sudo tee -a $LOG_FILE"
 
 echo ${run_cmd}
 eval ${run_cmd}

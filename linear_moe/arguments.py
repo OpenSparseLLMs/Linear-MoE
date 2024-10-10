@@ -465,7 +465,7 @@ def get_patch_args(parser):
         help='choose from attention, linear_attention, ssm, linear_rnn',
     )
 
-    group.add_argument('--la-module',
+    group.add_argument('--sequence-modeling-module',
                        type=str,
                        default='basic_linear_attention')
 

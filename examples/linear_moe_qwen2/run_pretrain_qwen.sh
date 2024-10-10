@@ -12,9 +12,9 @@ export HF_ENDPOINT=https://hf-mirror.com
 BASE_MODEL="qwen2"
 source ${LINEAR_MOE_PATH}/examples/config_linear_attention.env
 
-linear_moe_options=" \
+linear_sequence_modeling_options=" \
         --sequence-modeling-type ${SEQUENCE_MODELING_TYPE} \
-        --la-module ${LA_MODULE} \
+        --sequence-modeling-module ${SEQUENCE_MODELING_MODULE} \
         --la-mode ${LA_MODE} \
         --base-model ${BASE_MODEL} \
         --la-feature-map ${LA_FEATURE_MAP} \
@@ -287,7 +287,7 @@ TRAIN_ITERS=$(( ${TRAIN_TOKENS} / ${GLOBAL_BATCH_SIZE} / ${SEQ_LEN} ))
 LR_WARMUP_ITERS=$(( ${WARMUP_TOKENS}  / ${GLOBAL_BATCH_SIZE} / ${SEQ_LEN} ))
 LR_DECAY_ITERS=$(( ${TRAIN_TOKENS} /  ${GLOBAL_BATCH_SIZE} / ${SEQ_LEN} ))
 
-NAME="pretrain-mcore-${LA_MODULE}-qwen2-${MODEL_SIZE}-lr-${LR}-minlr-${MIN_LR}-bs-${BATCH_SIZE}-gbs-${GLOBAL_BATCH_SIZE}-seqlen-${SEQ_LEN}-pr-${PR}-tp-${TP}-pp-${PP}-ac-${AC}-do-${DO}-sp-${SP}-tt-${TRAIN_TOKENS}-wt-${WARMUP_TOKENS}"
+NAME="pretrain-mcore-${SEQUENCE_MODELING_MODULE}-qwen2-${MODEL_SIZE}-lr-${LR}-minlr-${MIN_LR}-bs-${BATCH_SIZE}-gbs-${GLOBAL_BATCH_SIZE}-seqlen-${SEQ_LEN}-pr-${PR}-tp-${TP}-pp-${PP}-ac-${AC}-do-${DO}-sp-${SP}-tt-${TRAIN_TOKENS}-wt-${WARMUP_TOKENS}"
 mkdir -p "${OUTPUT_BASEPATH}/tensorboard/"
 mkdir -p "${OUTPUT_BASEPATH}/checkpoint/"
 mkdir -p "${OUTPUT_BASEPATH}/log/"
@@ -363,7 +363,7 @@ megatron_options="  \
         "
 
 run_cmd="torchrun $DISTRIBUTED_ARGS pretrain_qwen.py
- ${megatron_options} ${pr_options} ${load_options} ${te_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${moe_options} ${linear_moe_options} 2>&1 | sudo tee -a $LOG_FILE"
+ ${megatron_options} ${pr_options} ${load_options} ${te_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${moe_options} ${linear_sequence_modeling_options} 2>&1 | sudo tee -a $LOG_FILE"
 
 echo ${run_cmd}
 eval ${run_cmd}

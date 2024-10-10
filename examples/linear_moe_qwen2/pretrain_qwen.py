@@ -59,24 +59,24 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
     config = core_transformer_config_from_args(args, Qwen2TransformerConfig)
     use_te = args.transformer_impl == "transformer_engine"
 
-    if args.sequence_modeling_type:
-        if args.la_module == "mamba2":
+    if args.sequence_modeling_type != "attention":
+        if args.sequence_modeling_module == "mamba2":
             mamba_stack_spec = get_hybrid_mamba2_stack_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "retention":
+        elif args.sequence_modeling_module == "retention":
             hybrid_transformer_layer_spec = get_hybrid_retention_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "based":
+        elif args.sequence_modeling_module == "based":
             hybrid_transformer_layer_spec = get_hybrid_based_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "rebased":
+        elif args.sequence_modeling_module == "rebased":
             hybrid_transformer_layer_spec = get_hybrid_rebased_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "linear_attention":
+        elif args.sequence_modeling_module == "linear_attention":
             hybrid_transformer_layer_spec = get_hybrid_basic_linear_attention_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "gla":
+        elif args.sequence_modeling_module == "gla":
             hybrid_transformer_layer_spec = get_hybrid_gla_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "deltanet":
+        elif args.sequence_modeling_module == "deltanet":
             hybrid_transformer_layer_spec = get_hybrid_deltanet_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "rwkv6":
+        elif args.sequence_modeling_module == "rwkv6":
             hybrid_transformer_layer_spec = get_hybrid_rwkv6_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
-        elif args.la_module == "hgrn2":
+        elif args.sequence_modeling_module == "hgrn2":
             hybrid_transformer_layer_spec = get_hybrid_hgrn2_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
     else:
         if use_te:
@@ -85,8 +85,8 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
         else:
             transformer_layer_spec = get_gpt_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
 
-    if args.sequence_modeling_type:
-        if args.la_module in ["mamba2"]:
+    if args.sequence_modeling_type != "attention":
+        if args.sequence_modeling_module in ["mamba2"]:
             model = MambaModel(
                 config=config,
                 mamba_stack_spec=mamba_stack_spec,

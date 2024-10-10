@@ -40,7 +40,7 @@ class Qwen2TransformerConfig(TransformerConfig):
 
     sequence_modeling_type: str = None
 
-    la_module: str = None
+    sequence_modeling_module: str = None
 
     la_mode: str = None
 

@@ -33,16 +33,16 @@ WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
 # # SSM
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module pure_mamba2 \
+#         --sequence-modeling-module pure_mamba2 \
 #         --base-model mixtral \
 #         "
 
 # Linear Attention
-linear_moe_options=" \
+linear_sequence_modeling_options=" \
         --sequence-modeling-type \
-        --la-module deltanet \
+        --sequence-modeling-module deltanet \
         --la-mode chunk \
         --base-model mixtral \
         --la-feature-map swish \
@@ -51,9 +51,9 @@ linear_moe_options=" \
         "
 
 # # Linear RNN
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module rwkv6 \
+#         --sequence-modeling-module rwkv6 \
 #         --la-mode chunk \
 #         --base-model mixtral \
 #         --la-output-norm groupnorm \
@@ -275,7 +275,7 @@ megatron_options="  \
 
 
 run_cmd="torchrun $DISTRIBUTED_ARGS pretrain_mcore_mistral.py
- ${megatron_options} ${pr_options} ${load_options} ${te_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${gqa_options} ${moe_options} ${linear_moe_options} 2>&1 | sudo tee -a $LOG_FILE"
+ ${megatron_options} ${pr_options} ${load_options} ${te_options} ${activation_checkpoint_options} ${do_options} ${flash_options} ${sp_options} ${gqa_options} ${moe_options} ${linear_sequence_modeling_options} 2>&1 | sudo tee -a $LOG_FILE"
 
 echo ${run_cmd}
 eval ${run_cmd}
@@ -283,9 +283,9 @@ set +x
 
 # note
 
-# linear_moe_options=" \
+# linear_sequence_modeling_options=" \
 #         --sequence-modeling-type \
-#         --la-module retention \
+#         --sequence-modeling-module retention \
 #         "
 
 # 在使用layer_specs.py中FusedLayerNorm时，这里的--normalization必须设为LayerNorm，否则报错
