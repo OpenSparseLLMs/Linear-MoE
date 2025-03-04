@@ -10,9 +10,6 @@
 [submodule "third_party/lm-evaluation-harness"]
 	path = third_party/lm-evaluation-harness
 	url = https://github.com/weigao266/lm-evaluation-harness.git
-[submodule "third_party/flash-linear-attention"]
-	path = third_party/flash-linear-attention
-	url = https://github.com/fla-org/flash-linear-attention
 [submodule "third_party/flash-linear-attention-250303"]
 	path = third_party/flash-linear-attention-250303
 	url = https://github.com/fla-org/flash-linear-attention
