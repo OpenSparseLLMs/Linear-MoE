@@ -4,7 +4,7 @@ ENV=dsw #$1
 MASTER_ADDR=localhost
 MASTER_PORT=$(shuf -n 1 -i 10000-65535)
 export CUDA_DEVICE_MAX_CONNECTIONS=1
-LINEAR_MOE_PATH=/cpfs04/user/landisen/Linear-MoE-public 
+LINEAR_MOE_PATH=./Linear-MoE-public 
 MEGATRON_PATH=${LINEAR_MOE_PATH}/third_party/Megatron-LM-0.9.0 #${LINEAR_MOE_HPAT}/Megatron-LM-231007
 OPENCOMPASS_PATH=${LINEAR_MOE_PATH}/third_party/opencompass
 export PYTHONPATH=${MEGATRON_PATH}:${OPENCOMPASS_PATH}:${LINEAR_MOE_PATH}:$PYTHONPATH
@@ -15,7 +15,7 @@ export CUDA_LAUNCH_BLOCKING=1
 
 DISTRIBUTED_ARGS="--nproc_per_node $GPUS_PER_NODE --nnodes $NNODES --node_rank $NODE_RANK --master_addr $MASTER_ADDR --master_port $MASTER_PORT"
 
-CHECKPOINT_DIR=/cpfs04/shared/MOE/landisen/models/linear_moe_checkpoints
+CHECKPOINT_DIR=/cpfs04/shared/MOE/checkpoints/models/linear_moe_checkpoints
 CHECKPOINT_PATH=${CHECKPOINT_DIR}/pretrain-mcore-linear_attention-qwen2-A0.3B-lr-1e-4-minlr-1e-5-bs-8-gbs-64-seqlen-2048-pr-bf16-tp-1-pp-1-ac-sel-do-true-sp-false-tt-15000000000-wt-10000
 
 TP=1 

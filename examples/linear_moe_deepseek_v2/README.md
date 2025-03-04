@@ -34,10 +34,10 @@ wget https://atp-modelzoo-wlcb-pai.oss-cn-wulanchabu.aliyuncs.com/release/models
 
 cd /workspace/Pai-Megatron-Patch/toolkits/pretrain_data_preprocessing
 sh run_make_pretraining_dataset_megatron.sh \
-/cpfs01/user/sunweigao/my/deepseek-datasets/SlimPajama.json \
+/cpfs04/shared/MOE/datasets/deepseek-datasets/SlimPajama.json \
 DeepSeekV2Tokenizer \
 text \
-/cpfs01/user/sunweigao/my/deepseek-datasets/ \
+/cpfs04/shared/MOE/datasets/deepseek-datasets/ \
 deepseek-ai/DeepSeek-V2-Lite
 
 ```

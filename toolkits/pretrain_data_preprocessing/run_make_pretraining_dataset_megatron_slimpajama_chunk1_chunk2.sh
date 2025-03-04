@@ -7,11 +7,11 @@ CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 MEGATRON_PATH=$( dirname $( dirname ${CURRENT_DIR}))
 export PYTHONPATH=$PYTHONPATH:${MEGATRON_PATH}:${MEGATRON_PATH}/Megatron-LM-240726
 
-input_data_dir=/cpfs01/user/sunweigao/my/data-SlimPajama/SlimPajama-627B-train-split-chunk1-chunk2.json
+input_data_dir=/cpfs04/shared/MOE/datasets/data-SlimPajama/SlimPajama-627B-train-split-chunk1-chunk2.json
 tokenizer=Qwen2Tokenizer
 json_keys=text
-output_data_dir=/cpfs01/user/sunweigao/my/data-SlimPajama/slimpajama_chunk1_chunk2_megatron_bin_data
-load_dir=/cpfs01/user/sunweigao/my/qwen-ckpts/Qwen2-0.5B
+output_data_dir=/cpfs04/shared/MOE/datasets/data-SlimPajama/slimpajama_chunk1_chunk2_megatron_bin_data
+load_dir=/cpfs04/shared/MOE/checkpoints/qwen-ckpts/Qwen2-0.5B
 
 INPUT="${input_data_dir}"
 

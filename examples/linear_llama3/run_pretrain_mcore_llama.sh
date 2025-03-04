@@ -37,8 +37,8 @@ TRAIN_CAPACITY_FACTOR=1.25
 EVAL_CAPACITY_FACTOR=2.0
 USE_GEMM=false
 SAVE_INTERVAL=100000
-DATASET_PATH=/cpfs01/shared/MOE/datasets/llama3-datasets/wudao_llama3bpe_content_document
-PRETRAIN_CHECKPOINT_PATH=/cpfs01/shared/MOE/checkpoints/llama3-ckpts/Meta-Llama-3-8B
+DATASET_PATH=/cpfs04/shared/MOE/datasets/llama3-datasets/wudao_llama3bpe_content_document
+PRETRAIN_CHECKPOINT_PATH=/cpfs04/shared/MOE/checkpoints/llama3-ckpts/Meta-Llama-3-8B
 TRAIN_TOKENS=10000000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
@@ -115,12 +115,12 @@ if [ $USE_GEMM = true ]; then
 fi
 
 if [ $ENV = dsw ]; then
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 MASTER_ADDR=localhost
 MASTER_PORT=$(shuf -n 1 -i 10000-65535)
 NNODES=1
 NODE_RANK=0
-GPUS_PER_NODE=1
+GPUS_PER_NODE=4
 
 elif [ $ENV = dlc ]; then
 

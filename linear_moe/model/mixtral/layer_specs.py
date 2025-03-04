@@ -183,7 +183,7 @@ def get_hybrid_mamba2_linear_moe_layer_local_spec(
             # Started with spec from gpt_layer_specs.py
             # Using the TE spec because we had problems getting the non-TE spec
             # working
-            # swg: uncomment this to use dense mlp_layer
+            # uncomment this to use dense mlp_layer
             # mlp_layer=ModuleSpec(
             #     module=TransformerLayer,
             #     submodules=TransformerLayerSubmodules(
@@ -197,7 +197,7 @@ def get_hybrid_mamba2_linear_moe_layer_local_spec(
             #         mlp_bda=get_bias_dropout_add,
             #     ),
             # ),
-            # swg: uncomment this to use moe mlp_layer
+            # uncomment this to use moe mlp_layer
             mlp_layer=ModuleSpec(
                 module=TransformerLayer,
                 submodules=TransformerLayerSubmodules(

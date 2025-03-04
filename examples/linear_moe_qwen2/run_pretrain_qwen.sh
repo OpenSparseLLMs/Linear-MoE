@@ -44,21 +44,20 @@ PRETRAIN_CHECKPOINT_PATH=/cpfs01/shared/MOE/checkpoints/qwen-ckpts/Qwen2-0.5B
 TRAIN_TOKENS=15000000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
-
 LA_MODULE="mom_gated_deltanet"
 BASE_MODEL="qwen2"
 
-# for models except mamba2
+# for linear attention and linear RNN models
 LAYER_TYPE_LIST="LLLLLLLLLLLL"
 # LAYER_TYPE_LIST="LLLLLLLLLLLLLLLL"
 # LAYER_TYPE_LIST="LLLNLLLNLLLN"
 # LAYER_TYPE_LIST="LLLNLLLNLLLNLLLN"
 
-# for only mamba2, MLP layers are fixed behind mamba or attention layers. M: mamba layer, *: attention layer
-# for pure_mamba2
+# for SSM models (Mamba2), MLP layers are fixed behind mamba or attention layers. M: mamba layer, *: attention layer
+# pure mamba2
 HYBRID_OVERRIDE_PATTERN="MMMMMMMMMMMM"
 # HYBRID_OVERRIDE_PATTERN="MMMMMMMMMMMMMMMM"
-# for hybrid_mamba2
+# hybrid mamba2
 # HYBRID_OVERRIDE_PATTERN="MMM*MMM*MMM*"
 # HYBRID_OVERRIDE_PATTERN="MMM*MMM*MMM*MMM*"
 
@@ -66,14 +65,7 @@ HYBRID_OVERRIDE_PATTERN="MMMMMMMMMMMM"
 # HYBRID_OVERRIDE_PATTERN="M-M-M-*-M-M-M-*-M-M-M-*-"
 # HYBRID_OVERRIDE_PATTERN="M-M-M-*-M-M-M-*-M-M-M-*-M-M-M-*-"
 
-# # SSM
-# linear_moe_options=" \
-#         --use-la-module \
-#         --la-module ${LA_MODULE} \
-#         --base-model ${BASE_MODEL} \
-#         "
-
-# Linear Attention
+# Linear Attention & Linear RNN
 linear_moe_options=" \
         --use-la-module \
         --la-module ${LA_MODULE} \
@@ -85,16 +77,13 @@ linear_moe_options=" \
         --layer-type-list ${LAYER_TYPE_LIST} \
         "
 
-# # Linear RNN
+# # SSM
 # linear_moe_options=" \
 #         --use-la-module \
 #         --la-module ${LA_MODULE} \
-#         --la-mode chunk \
 #         --base-model ${BASE_MODEL} \
-#         --la-output-norm rmsnorm \
-#         --la-gate-fn swish \
-#         --layer-type-list ${LAYER_TYPE_LIST} \
 #         "
+
 
 if [ $MB = true ]; then
     linear_moe_options="${linear_moe_options} \
