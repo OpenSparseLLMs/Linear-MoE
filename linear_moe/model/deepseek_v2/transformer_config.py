@@ -74,3 +74,11 @@ class DeepSeekV2TransformerConfig(TransformerConfig):
     expand_v: float = 1.0
     
     layer_type_list: str = None
+
+    num_memories: int = 4
+
+    topk: int = 2
+
+    capacity: float = 1.0
+
+    shared_mem: bool = True

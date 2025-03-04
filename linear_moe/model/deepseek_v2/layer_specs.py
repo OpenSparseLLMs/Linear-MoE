@@ -23,6 +23,7 @@ from linear_moe.sequence_modeling.basic_linear_attention import BasicLinearAtten
 from linear_moe.sequence_modeling.gla import GLA
 from linear_moe.sequence_modeling.gla import GLAGate
 from linear_moe.sequence_modeling.deltanet import DeltaNet
+from linear_moe.sequence_modeling.gated_deltanet import GatedDeltaNet
 from linear_moe.sequence_modeling.lightning_attention import LightningAttention
 from linear_moe.sequence_modeling.lasp2 import LASP2
 from linear_moe.sequence_modeling.rwkv6 import DDLerpLinear
@@ -36,6 +37,7 @@ from linear_moe.sequence_modeling.mamba2.mamba_mixer import MambaMixer, MambaMix
 from .transformer.mlp import MLP, MLPSubmodules
 from .transformer.attention import SelfAttention, SelfAttentionSubmodules
 from linear_moe.sequence_modeling.linear_attention import LinearAttention, LinearAttentionSubmodules
+from linear_moe.sequence_modeling.mom_linear_attention import MomLinearAttention, MomLinearAttentionSubmodules
 from linear_moe.sequence_modeling.linear_rnn import LinearRNN, LinearRNNSubmodules
 from .moe.moe_layer import MoELayer
 from .transformer_layer import TransformerLayer, TransformerLayerSubmodules
@@ -455,6 +457,81 @@ def get_hybrid_gla_linear_moe_layer_local_spec(
     )
 
 
+# Use this spec for an implementation using only modules in megatron core
+def get_hybrid_mom_gla_linear_moe_layer_local_spec(
+    num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
+) -> ModuleSpec:
+    mlp = _get_mlp_module_spec(
+        use_te=False, num_experts=num_experts, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    mlp_dense = _get_mlp_module_spec(
+        use_te=False, num_experts=None, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    return ModuleSpec(
+        module=HybridTransformerBlock,
+        submodules=HybridTransformerBlockSubmodules(
+            linear_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=DeepseekV2RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=MomLinearAttention,
+                        # params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=MomLinearAttentionSubmodules(
+                            qkv_proj=ColumnParallelLinear,
+                            o_gate_proj=ColumnParallelLinear,
+                            gk_proj=GLAGate,
+                            core_linear_attention=GLA,
+                            o_proj=RowParallelLinear,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+            normal_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=DeepseekV2RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=SelfAttention,
+                        params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=SelfAttentionSubmodules(
+                            linear_q_proj=ColumnParallelLinear,
+                            linear_q_a_proj=ColumnParallelLinear,
+                            linear_q_b_proj=ColumnParallelLinear,
+                            linear_kv_a_proj_with_mqa=ColumnParallelLinear,
+                            linear_kv_b_proj=ColumnParallelLinear,
+                            linear_proj=RowParallelLinear,
+                            q_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            kv_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            core_attention=DotProductAttention,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+        ),
+    )
+
+
 def get_hybrid_deltanet_linear_moe_layer_local_spec(
     num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
 ) -> ModuleSpec:
@@ -579,6 +656,154 @@ def get_hybrid_lightning_attention_linear_moe_layer_local_spec(
                     mlp=mlp,
                     mlp_dense=mlp_dense,
                     mlp_bda=get_bias_dropout_add,
+                ),
+            ),
+        ),
+    )
+
+
+# Use this spec for an implementation using only modules in megatron core
+def get_hybrid_gated_deltanet_linear_moe_layer_local_spec(
+    num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
+) -> ModuleSpec:
+    mlp = _get_mlp_module_spec(
+        use_te=False, num_experts=num_experts, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    mlp_dense = _get_mlp_module_spec(
+        use_te=False, num_experts=None, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    return ModuleSpec(
+        module=HybridTransformerBlock,
+        submodules=HybridTransformerBlockSubmodules(
+            linear_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=DeepseekV2RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=LinearAttention,
+                        # params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=LinearAttentionSubmodules(
+                            qkv_proj=ColumnParallelLinear,
+                            o_gate_proj=ColumnParallelLinear,
+                            core_linear_attention=GatedDeltaNet,
+                            o_proj=RowParallelLinear,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+            normal_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=DeepseekV2RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=SelfAttention,
+                        params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=SelfAttentionSubmodules(
+                            linear_q_proj=ColumnParallelLinear,
+                            linear_q_a_proj=ColumnParallelLinear,
+                            linear_q_b_proj=ColumnParallelLinear,
+                            linear_kv_a_proj_with_mqa=ColumnParallelLinear,
+                            linear_kv_b_proj=ColumnParallelLinear,
+                            linear_proj=RowParallelLinear,
+                            q_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            kv_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            core_attention=DotProductAttention,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+        ),
+    )
+
+
+# Use this spec for an implementation using only modules in megatron core
+def get_hybrid_mom_gated_deltanet_linear_moe_layer_local_spec(
+    num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
+) -> ModuleSpec:
+    mlp = _get_mlp_module_spec(
+        use_te=False, num_experts=num_experts, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    mlp_dense = _get_mlp_module_spec(
+        use_te=False, num_experts=None, moe_grouped_gemm=moe_grouped_gemm
+    )
+    
+    return ModuleSpec(
+        module=HybridTransformerBlock,
+        submodules=HybridTransformerBlockSubmodules(
+            linear_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=DeepseekV2RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=MomLinearAttention,
+                        # params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=MomLinearAttentionSubmodules(
+                            qkv_proj=ColumnParallelLinear,
+                            o_gate_proj=ColumnParallelLinear,
+                            core_linear_attention=GatedDeltaNet,
+                            o_proj=RowParallelLinear,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+            normal_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=DeepseekV2RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=SelfAttention,
+                        params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=SelfAttentionSubmodules(
+                            linear_q_proj=ColumnParallelLinear,
+                            linear_q_a_proj=ColumnParallelLinear,
+                            linear_q_b_proj=ColumnParallelLinear,
+                            linear_kv_a_proj_with_mqa=ColumnParallelLinear,
+                            linear_kv_b_proj=ColumnParallelLinear,
+                            linear_proj=RowParallelLinear,
+                            q_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            kv_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            core_attention=DotProductAttention,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
                 ),
             ),
         ),

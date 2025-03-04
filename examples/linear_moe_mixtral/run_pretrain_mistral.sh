@@ -4,7 +4,7 @@ set -e
 CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 LINEAR_MOE_PATH=$( dirname $( dirname ${CURRENT_DIR}))
 MEGATRON_PATH=${LINEAR_MOE_PATH}/third_party/Megatron-LM-0.9.0
-FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-1018
+FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-250303
 echo $MEGATRON_PATH
 echo $FLA_PATH
 export PYTHONPATH=${MEGATRON_PATH}:${LINEAR_MOE_PATH}:$PYTHONPATH
@@ -45,7 +45,7 @@ TRAIN_TOKENS=100000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
-LA_MODULE="gla"
+LA_MODULE="mom_gated_deltanet"
 BASE_MODEL="mixtral"
 
 # for models except mamba2
@@ -78,7 +78,7 @@ HYBRID_OVERRIDE_PATTERN="MMMMMMMM"
 linear_moe_options=" \
         --use-la-module \
         --la-module ${LA_MODULE} \
-        --la-mode fused_chunk \
+        --la-mode chunk \
         --base-model ${BASE_MODEL} \
         --la-feature-map swish \
         --la-output-norm rmsnorm \

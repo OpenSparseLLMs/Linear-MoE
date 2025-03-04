@@ -71,6 +71,8 @@ class GatedDeltaNet(MegatronModule):
             self._la_impl = chunk_gated_delta_rule
         elif self.la_mode == 'fused_recurrent':
             self._la_impl = fused_recurrent_gated_delta_rule
+        else:
+            raise NotImplementedError('Not supported la_mode')
         
         self.apply(self._initialize_weights)
 

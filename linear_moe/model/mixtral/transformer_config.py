@@ -93,6 +93,14 @@ class MixtralTransformerConfig(TransformerConfig):
     
     layer_type_list: str = None
 
+    num_memories: int = 4
+
+    topk: int = 2
+
+    capacity: float = 1.0
+
+    shared_mem: bool = True
+
     def __post_init__(self):
         super().__post_init__()
 

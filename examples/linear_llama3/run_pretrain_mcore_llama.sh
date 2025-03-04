@@ -5,7 +5,7 @@ set -e
 CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 LINEAR_MOE_PATH=$( dirname $( dirname ${CURRENT_DIR}))
 MEGATRON_PATH=${LINEAR_MOE_PATH}/third_party/Megatron-LM-0.9.0
-FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-1018
+FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-250303
 echo $MEGATRON_PATH
 echo $FLA_PATH
 export PYTHONPATH=${MEGATRON_PATH}:${LINEAR_MOE_PATH}:$PYTHONPATH
@@ -16,7 +16,7 @@ export HF_ENDPOINT=https://hf-mirror.com
 ENV=dsw
 MODEL_SIZE=0.3B
 BATCH_SIZE=4
-GLOBAL_BATCH_SIZE=8
+GLOBAL_BATCH_SIZE=4
 LR=1e-5
 MIN_LR=1e-6
 SEQ_LEN=2048
@@ -37,13 +37,13 @@ TRAIN_CAPACITY_FACTOR=1.25
 EVAL_CAPACITY_FACTOR=2.0
 USE_GEMM=false
 SAVE_INTERVAL=100000
-DATASET_PATH=/cpfs01/user/sunweigao/my/llama3-datasets/wudao_llama3bpe_content_document
-PRETRAIN_CHECKPOINT_PATH=/cpfs01/user/sunweigao/my/llama3-ckpts/Meta-Llama-3-8B
+DATASET_PATH=/cpfs01/shared/MOE/datasets/llama3-datasets/wudao_llama3bpe_content_document
+PRETRAIN_CHECKPOINT_PATH=/cpfs01/shared/MOE/checkpoints/llama3-ckpts/Meta-Llama-3-8B
 TRAIN_TOKENS=10000000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
-LA_MODULE="mamba2"
+LA_MODULE="mom_gated_deltanet"
 BASE_MODEL="llama3"
 
 # for models except mamba2
@@ -65,22 +65,22 @@ HYBRID_OVERRIDE_PATTERN="MMMMMMMMMMMM"
 # HYBRID_OVERRIDE_PATTERN="M-M-M-*-M-M-M-*-M-M-M-*-M-M-M-*-"
 
 # SSM
-linear_moe_options=" \
-        --use-la-module \
-        --la-module ${LA_MODULE} \
-        --base-model ${BASE_MODEL} \
-        "
-
-# # Linear Attention
 # linear_moe_options=" \
 #         --use-la-module \
 #         --la-module ${LA_MODULE} \
-#         --la-mode chunk \
 #         --base-model ${BASE_MODEL} \
-#         --la-feature-map swish \
-#         --la-output-norm rmsnorm \
-#         --la-gate-fn swish \
-#         --layer-type-list ${LAYER_TYPE_LIST} \
+#         "
+
+# # Linear Attention
+linear_moe_options=" \
+        --use-la-module \
+        --la-module ${LA_MODULE} \
+        --la-mode chunk \
+        --base-model ${BASE_MODEL} \
+        --la-feature-map swish \
+        --la-output-norm rmsnorm \
+        --la-gate-fn swish \
+        --layer-type-list ${LAYER_TYPE_LIST} \
 #         "
 
 # # Linear RNN
@@ -120,7 +120,7 @@ MASTER_ADDR=localhost
 MASTER_PORT=$(shuf -n 1 -i 10000-65535)
 NNODES=1
 NODE_RANK=0
-GPUS_PER_NODE=2
+GPUS_PER_NODE=1
 
 elif [ $ENV = dlc ]; then
 
