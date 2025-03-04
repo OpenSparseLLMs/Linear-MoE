@@ -5,7 +5,8 @@ set -e
 CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 LINEAR_MOE_PATH=$( dirname $( dirname ${CURRENT_DIR}))
 MEGATRON_PATH=${LINEAR_MOE_PATH}/third_party/Megatron-LM-0.9.0
-FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-1018
+FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-250303
+# FLA_PATH=/cpfs01/user/dujusen/flash-linear-attention
 echo $MEGATRON_PATH
 echo $FLA_PATH
 export PYTHONPATH=${MEGATRON_PATH}:${LINEAR_MOE_PATH}:$PYTHONPATH
@@ -15,12 +16,12 @@ export HF_ENDPOINT=https://hf-mirror.com
 
 ENV=dsw
 MODEL_SIZE=A0.3B
-BATCH_SIZE=1
-GLOBAL_BATCH_SIZE=2
+BATCH_SIZE=4
+GLOBAL_BATCH_SIZE=8
 LR=1e-4
 MIN_LR=1e-5
-SEQ_LEN=1024
-PAD_LEN=1024
+SEQ_LEN=2048
+PAD_LEN=2048
 PR=bf16
 TP=1
 PP=1
@@ -44,7 +45,7 @@ TRAIN_TOKENS=15000000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
-LA_MODULE="gla"
+LA_MODULE="mom_gated_deltanet"
 BASE_MODEL="qwen2"
 
 # for models except mamba2
@@ -76,7 +77,7 @@ HYBRID_OVERRIDE_PATTERN="MMMMMMMMMMMM"
 linear_moe_options=" \
         --use-la-module \
         --la-module ${LA_MODULE} \
-        --la-mode fused_chunk \
+        --la-mode chunk \
         --base-model ${BASE_MODEL} \
         --la-feature-map swish \
         --la-output-norm rmsnorm \

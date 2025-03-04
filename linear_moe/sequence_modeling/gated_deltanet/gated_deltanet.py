@@ -7,17 +7,39 @@ import torch.nn.functional as F
 from megatron.core.transformer.module import MegatronModule
 from linear_moe.model.common_modules.activations import ACT2FN
 
-from linear_moe.model.common_modules import RMSNorm
-from fla.ops.gla import chunk_gla, fused_chunk_gla, fused_recurrent_gla
+from linear_moe.model.common_modules import RMSNorm, l2_norm_fn
+from fla.ops.gated_delta_rule import chunk_gated_delta_rule, fused_recurrent_gated_delta_rule
+
+def simple_norm(x):
+    return (F.normalize(x, dim=-1) * x.shape[-1] ** 0.5).to(x)
 
 
-class GLA(MegatronModule):
+# @torch.jit.script
+def elu_p1(x):
+    return (F.elu(x, 1., False) + 1.).to(x)
+
+
+# @torch.jit.script
+def sum_norm(x):
+    return (x / x.sum(-1, keepdim=True)).to(x)
+
+
+# @torch.jit.script
+def elu_norm(x):
+    dtype = x.dtype
+    x = F.elu(x, 1., False) + 1.
+    return (x / x.sum(-1, keepdim=True)).to(dtype)
+
+class GatedDeltaNet(MegatronModule):
 
     def __init__(
         self, 
         config,
         expand_k: float = 1.0,
         expand_v: float = 1.0,
+        chunk_size: int = 64,
+        qk_activation: str = 'silu',
+        qk_norm: str = 'l2',
     ):
         super().__init__(config)
         
@@ -28,9 +50,12 @@ class GLA(MegatronModule):
         self.num_kv_heads = config.num_query_groups if config.num_query_groups is not None else config.num_attention_heads
         self.num_kv_groups = self.num_heads // self.num_kv_heads
         
-        self.la_feature_map = config.la_feature_map
-        self.la_feature_map_fn = ACT2FN[self.la_feature_map] if self.la_feature_map is not None else None
+        self.qk_activation = qk_activation
+        self.qk_norm = qk_norm
+        self.chunk_size = chunk_size
 
+        assert self.qk_activation in ['silu', 'relu', 'elu', 'identity']
+        assert self.qk_norm in ['l2', 'sum']
         self.key_dim = int(config.hidden_size * expand_k)
         self.value_dim = int(config.hidden_size * expand_v)
 
@@ -41,22 +66,11 @@ class GLA(MegatronModule):
         self.head_qk_dim = self.key_dim // self.num_heads
         self.head_v_dim = self.value_dim // self.num_heads
 
-        if config.la_output_norm == 'rmsnorm':
-            self.la_output_norm = RMSNorm(hidden_size=self.head_v_dim, elementwise_affine=config.la_elementwise_affine, eps=config.la_norm_eps)
-        elif config.la_output_norm == 'identity':
-            self.la_output_norm = torch.nn.Identity()
-        else:
-            raise NotImplementedError(f"Not supported output norm `{self.la_output_norm}`.")
-        
-        self.gla_la_gate_logit_normalizer = config.gla_la_gate_logit_normalizer
-        self.gla_la_clamp_min = config.gla_la_clamp_min
         
         if self.la_mode == 'chunk':
-            self._la_impl = chunk_gla
-        elif self.la_mode == 'fused_chunk':
-            self._la_impl = fused_chunk_gla
+            self._la_impl = chunk_gated_delta_rule
         elif self.la_mode == 'fused_recurrent':
-            self._la_impl = fused_recurrent_gla
+            self._la_impl = fused_recurrent_gated_delta_rule
         
         self.apply(self._initialize_weights)
 
@@ -75,25 +89,26 @@ class GLA(MegatronModule):
         q: torch.Tensor,
         k: torch.Tensor,
         v: torch.Tensor,
+        beta: torch.Tensor,
         gk: torch.Tensor,
     ) -> torch.Tensor:
         
         # torch.Size([128, 4, 16, 32])
-        q, k, v = (rearrange(x, 'n b h d -> b h n d').contiguous() for x in (q, k, v))
-        
-        gk = rearrange(gk, 'n b (h d) -> b h n d', h=self.num_kv_heads).contiguous()
-        gk = F.logsigmoid(gk) / self.gla_la_gate_logit_normalizer
+        q, k, v, beta, gk = (x.transpose(0, 1).contiguous() for x in (q, k, v, beta, gk))
 
-        if self.la_feature_map_fn is not None:
-            q, k = map(self.la_feature_map_fn, (q, k))
-        
-        if self.gla_la_clamp_min is not None:
-            gk = torch.clamp_min(gk, self.gla_la_clamp_min)
+        q, k, v = torch.nn.SiLU()(q), torch.nn.SiLU()(k), torch.nn.SiLU()(v)
+
+        if self.qk_norm is not None:
+            if self.qk_norm == 'l2':
+                q = l2_norm_fn(q)
+                k = l2_norm_fn(k)
+            elif self.qk_norm == 'sum':
+                q = sum_norm(q).to(v)
+                k = sum_norm(k).to(v)
 
         # expects q: B, H, T, K
-        output, _ = self._la_impl(q, k, v, gk)
-        output = self.la_output_norm(output)
-
-        output = rearrange(output, 'b h n d -> n b (h d)').contiguous()
+        output, _ = self._la_impl(q, k, v, gk, beta, head_first=False)
+        
+        output = rearrange(output, 'b n h d -> n b (h d)').contiguous()
 
         return output
