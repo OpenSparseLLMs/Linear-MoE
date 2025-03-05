@@ -5,7 +5,7 @@ set -e
 CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 LINEAR_MOE_PATH=$( dirname $( dirname ${CURRENT_DIR}))
 MEGATRON_PATH=${LINEAR_MOE_PATH}/third_party/Megatron-LM-0.9.0
-FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-1018
+FLA_PATH=${LINEAR_MOE_PATH}/third_party/flash-linear-attention-250303
 echo $MEGATRON_PATH
 echo $FLA_PATH
 export PYTHONPATH=${MEGATRON_PATH}:${LINEAR_MOE_PATH}:$PYTHONPATH
@@ -16,7 +16,7 @@ export HF_ENDPOINT=https://hf-mirror.com
 ENV=dsw
 MODEL_SIZE=A2.4B
 BATCH_SIZE=1
-GLOBAL_BATCH_SIZE=4
+GLOBAL_BATCH_SIZE=1
 LR=1e-5
 MIN_LR=1e-6
 SEQ_LEN=128
@@ -38,13 +38,13 @@ TOKEN_DROPPING=false
 TRAIN_CAPACITY_FACTOR=1.25
 EVAL_CAPACITY_FACTOR=2.0
 SAVE_INTERVAL=100000
-DATASET_PATH=/cpfs04/shared/MOE/datasets/deepseek-datasets/mmap_deepseekv2_datasets_text_document
+DATASET_PATH=datasets/deepseek-datasets/mmap_deepseekv2_datasets_text_document
 PRETRAIN_CHECKPOINT_PATH=deepseek-ai/DeepSeek-V2-Lite
 TRAIN_TOKENS=100000000
 WARMUP_TOKENS=10000
 OUTPUT_BASEPATH=./output
 
-LA_MODULE="lightning_attention"
+LA_MODULE="mom_gated_deltanet"
 BASE_MODEL="qwen2"
 
 # for models except mamba2
@@ -116,12 +116,12 @@ if [ $USE_GEMM = true ]; then
 fi
 
 if [ $ENV = dsw ]; then
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1
 MASTER_ADDR=localhost
 MASTER_PORT=$(shuf -n 1 -i 10000-65535)
 NNODES=1
 NODE_RANK=0
-GPUS_PER_NODE=4
+GPUS_PER_NODE=1
 
 elif [ $ENV = dlc ]; then
 

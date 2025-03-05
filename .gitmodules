@@ -7,9 +7,9 @@
 [submodule "third_party/flash-linear-attention-1018"]
 	path = third_party/flash-linear-attention-1018
 	url = https://github.com/sustcsonglin/flash-linear-attention.git
-[submodule "third_party/flash-linear-attention-1225"]
-	path = third_party/flash-linear-attention-1225
-	url = https://github.com/sustcsonglin/flash-linear-attention.git
 [submodule "third_party/lm-evaluation-harness"]
 	path = third_party/lm-evaluation-harness
 	url = https://github.com/weigao266/lm-evaluation-harness.git
+[submodule "third_party/flash-linear-attention-250303"]
+	path = third_party/flash-linear-attention-250303
+	url = https://github.com/fla-org/flash-linear-attention

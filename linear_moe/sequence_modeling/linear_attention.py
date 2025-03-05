@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+import math
 from typing import Optional, Union
 from einops import rearrange
 import torch
+from torch.nn import functional as F
 from megatron.core import parallel_state
 from megatron.core.transformer.module import MegatronModule
 from megatron.core.transformer.spec_utils import ModuleSpec, build_module
@@ -9,7 +11,6 @@ from megatron.core.transformer.enums import AttnMaskType
 from megatron.core.models.common.embeddings.rotary_pos_embedding import apply_rotary_pos_emb
 from megatron.core.utils import divide
 from linear_moe.model.common_modules.activations import ACT2FN
-
 
 @dataclass
 class LinearAttentionSubmodules:
@@ -86,6 +87,31 @@ class LinearAttention(MegatronModule):
         if self.la_module == 'deltanet':
             self.beta_proj = torch.nn.Linear(self.hidden_size, self.num_heads, bias=False)
         
+        if self.la_module == 'gated_deltanet':
+            self.beta_proj = torch.nn.Linear(self.hidden_size, self.num_heads, bias=False)
+            self.a_proj = torch.nn.Linear(self.hidden_size, self.num_heads, bias=False)
+            A = torch.empty(self.num_heads, dtype=torch.float32).uniform_(0, 16)
+            A_log = torch.log(A)
+            self.A_log = torch.nn.Parameter(A_log)
+            self.A_log._no_weight_decay = True
+            self.D = torch.nn.Parameter(torch.ones(self.num_heads))
+            self.D._no_weight_decay = True
+            # hard coded for now
+            dt_min = 0.001
+            dt_max = 0.1
+            dt_init_floor = 1e-4
+            dt = torch.exp(
+                torch.rand(self.num_heads) * (math.log(dt_max) - math.log(dt_min))
+                + math.log(dt_min)
+            )
+            dt = torch.clamp(dt, min=dt_init_floor)
+            # Inverse of softplus: https://github.com/pytorch/pytorch/issues/72759
+            inv_dt = dt + torch.log(-torch.expm1(-dt))
+            self.dt_bias = torch.nn.Parameter(inv_dt)
+            # Just to be explicit. Without this we already don't put wd on dt_bias because of the check
+            # name.endswith("bias") in param_grouping.py
+            self.dt_bias._no_weight_decay = True
+        
         self.core_linear_attention = build_module(
             submodules.core_linear_attention,
             config=self.config,
@@ -121,13 +147,14 @@ class LinearAttention(MegatronModule):
         o_gate, _ = self.o_gate_proj(hidden_states)
         if self.la_module == 'gla':
             gk = self.gk_proj(hidden_states)
-        else:
-            gk = None
-        
-        if self.la_module == 'deltanet':
+        elif self.la_module == 'deltanet':
             beta = rearrange(self.beta_proj(hidden_states), 'b n h -> b h n').sigmoid()
+        elif self.la_module == 'gated_deltanet':
+            beta = self.beta_proj(hidden_states.transpose(0, 1)).sigmoid().transpose(0, 1)
+            gk = -self.A_log.float().exp() * F.softplus(self.a_proj(hidden_states.transpose(0, 1)).float() + self.dt_bias).transpose(0, 1)
         else:
             beta = None
+            gk = None
 
         q, k, v = torch.split(
             qkv.view(qkv.size()[:-1] + (self.num_attention_heads_per_partition, -1)),
@@ -201,6 +228,14 @@ class LinearAttention(MegatronModule):
                 k=k,
                 v=v,
                 beta=beta,
+            )
+        elif self.la_module == 'gated_deltanet':
+            o = self.core_linear_attention(
+                q=q,
+                k=k,
+                v=v,
+                beta=beta,
+                gk=gk,
             )
         elif self.la_module == 'mixattention':
             o = self.core_linear_attention(
