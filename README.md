@@ -42,7 +42,7 @@ This repo offers Linear-MoE, a **production-ready library** for modeling and tra
 
 # Installation
 
-Your environment should satify the following requirements:
+Your environment should satisfy the following requirements:
 
 - [PyTorch](https://pytorch.org/) >= 2.0
 - [Triton](https://github.com/openai/triton) >=2.2
