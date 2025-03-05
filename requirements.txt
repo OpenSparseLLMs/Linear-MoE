@@ -17,7 +17,7 @@ datasets
 tensorboard
 lm_dataformat
 tiktoken
-# mamba-ssm
+mamba-ssm
 megablocks==0.5.1  # torch<3.0,>=2.3.0
 stanford-stk==0.7.1
-# git+https://github.com/fanshiqing/grouped_gemm@v1.0
+git+https://github.com/fanshiqing/grouped_gemm@v1.0
