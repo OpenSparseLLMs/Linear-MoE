@@ -1,10 +1,12 @@
 <div align="center">
 
 # Linear-MoE
+[![arXiv](https://img.shields.io/badge/Arxiv-2503.05447-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2503.05447)
+[![stars](https://img.shields.io/github/stars/OpenSparseLLMs/Linear-MoE)](https://github.com/OpenSparseLLMs/Linear-MoE/stargazers)
 
 </div>
 
-This repo offers Linear-MoE, a **production-ready library** for modeling and training Linear-MoE models, non-invasively built on the latest [Megatron-Core](https://github.com/NVIDIA/Megatron-LM). **Contributions through pull requests are highly encouraged!**
+This repo aims to provide a **production-ready library** for modeling and training Linear-MoE models, non-invasively built on the latest [Megatron-Core](https://github.com/NVIDIA/Megatron-LM). **Contributions through pull requests are highly encouraged!**
 
 <!-- It supports state-of-the-art open-source Mixture of Experts (MoE) models, seamlessly integrated with advanced linear sequence modeling techniques such as Linear Attention, State Space Modeling, and Linear RNN. LInear-MoE is still under development, **Contributions through pull requests are highly encouraged!** -->
 
@@ -18,9 +20,12 @@ This repo offers Linear-MoE, a **production-ready library** for modeling and tra
 |  |         [GLA](https://arxiv.org/abs/2312.06635)  <br> (@MIT@IBM)         | ✅ |     ✅      |    ✅       | ✅   |
 |  |           [Delta Net](https://arxiv.org/abs/2102.11174) <br> (@MIT)            | ✅ |    ✅    |     ✅      | ✅   |
 |  |           [GSA](https://arxiv.org/abs/2409.07146) <br> (@SUDA@MIT)      | ✅ |    ✅    |     ✅      | ✅   |
-|  | [Based](https://hazyresearch.stanford.edu/blog/2023-12-11-zoology2-based) <br> (@Stanford) | ✅ |      ✅      |      ✅     |  ✅   |
+|  | [Based](https://arxiv.org/abs/2402.18668) <br> (@Stanford) | ✅ |      ✅      |      ✅     |  ✅   |
 |  |            [Rebased](https://arxiv.org/abs/2402.10644) <br> (@Tinkoff)            | ✅ |  ✅  |      ✅     | ✅   |
-|  |            [LASP-2](https://arxiv.org/abs/) <br> (@Shanghai AI Lab)            | ✅ |  ✅  |      ✅     | ✅   |
+|  |            [LASP-2](https://arxiv.org/abs/2502.07563) <br> (@Shanghai AI Lab)            | ✅ |  ✅  |      ✅     | ✅   |
+|  |            [Gated DeltaNet](https://arxiv.org/abs/2412.06464) <br> (@MIT@NVIDIA)            | ✅ |  ✅  |      ✅     | ✅   |
+|  |            [🔥MoM (with GLA)](https://arxiv.org/abs/2502.13685) <br> (@Shanghai AI Lab)            | ✅ |  ✅  |      ✅     | ✅   |
+|  |            [🔥MoM (with Gated DeltaNet)](https://arxiv.org/abs/2502.13685) <br> (@Shanghai AI Lab)            | ✅ |  ✅  |      ✅     | ✅   |
 | State Space Modeling (SSM) |             [Mamba2](https://arxiv.org/abs/2405.21060) <br> (@Princeton@CMU) | ✅ | ✅  |   ✅   | ✅   |
 | Linear RNN |             [RWKV6](https://arxiv.org/abs/2404.05892) <br> (@RWKV)              |  ✅  |   ✅   |    ✅    | ✅   |
 |  |             [HGRN2](https://arxiv.org/abs/2404.07904) <br> (@TapTap@Shanghai AI Lab)             | ✅ |   ✅   |   ✅   |  ✅   |
@@ -28,17 +33,22 @@ This repo offers Linear-MoE, a **production-ready library** for modeling and tra
 |  |             [FlashAttention-2](https://arxiv.org/abs/2307.08691) <br> (@Princeton@Stanford)             | ✅ |   ✅   |   ✅   |  ✅   |
 
 
-# Framework Overview
+# Overview
 
 <p align="center">
   <img src="./images/linear-moe-fig1.png" width="80%" />
-  <figcaption style="text-align: center;">Figure 1: Linear-MoE Framework</figcaption>
 </p>
+<div align="center">
+Figure 1: Linear-MoE System
+</div>
+
 
 <p align="center">
   <img src="./images/linear-moe-fig2.png" width="80%" />
-  <figcaption style="text-align: center;">Figure 2: Linear-MoE Model Architecture</figcaption>
 </p>
+<div align="center">
+Figure 2: Linear-MoE Model Architecture
+</div>
 
 # Installation
 
@@ -197,11 +207,25 @@ We built this repo upon [alibaba/PAI-Megatron-Patch](https://github.com/alibaba/
 # Citation
 If you find this repo useful, please consider citing our work:
 ```bib
+@article{sun2025linear-moe,
+  title={Linear-MoE: Linear Sequence Modeling Meets Mixture-of-Experts},
+  author={Sun, Weigao and Lan, Disen and Zhu, Tong and Qu, Xiaoye and Cheng, Yu},
+  journal={arXiv preprint arXiv:2503.05447},
+  year={2025}
+}
+
 @software{sun2024linear-moe,
   title  = {Linear-MoE: A Production-Ready Library for Modeling and Training Linear-MoE Models},
   author = {Sun, Weigao and Lan, Disen and Zhu, Tong and Du, Jusen},
   url    = {https://github.com/OpenSparseLLMs/Linear-MoE},
   year   = {2024}
+}
+
+@article{du2025mom,
+  title={MoM: Linear Sequence Modeling with Mixture-of-Memories},
+  author={Du, Jusen and Sun, Weigao and Lan, Disen and Hu, Jiaxi and Cheng, Yu},
+  journal={arXiv preprint arXiv:2502.13685},
+  year={2025}
 }
 
 @article{sun2025lasp2,
