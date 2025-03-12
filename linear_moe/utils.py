@@ -29,6 +29,15 @@ def compute_weight_and_optimizer_memory(args, verbose=False):
     # MoE.
     num_experts = 1 if args.num_experts is None else args.num_experts
     gated_linear_multiplier = 3 / 2 if args.swiglu else 1
+
+    # Fine-grained Experts + Shared Experts
+    if args.moe_ffn_hidden_size is not None:
+        intermediate_hidden_size = args.moe_ffn_hidden_size
+    else:
+        intermediate_hidden_size = args.ffn_hidden_size
+    
+    shared_moe_ffn_hidden_size = args.shared_moe_ffn_hidden_size if args.shared_moe_ffn_hidden_size else 0
+
     num_parameters_in_transformer_layers = (
         2
         * args.num_layers
@@ -41,7 +50,7 @@ def compute_weight_and_optimizer_memory(args, verbose=False):
                 * query_projection_to_hidden_size_ratio
             )
             # MLP.
-            + ((args.ffn_hidden_size / args.hidden_size) * num_experts * gated_linear_multiplier)
+            + ((intermediate_hidden_size / args.hidden_size) * num_experts * gated_linear_multiplier + (shared_moe_ffn_hidden_size / args.hidden_size) * gated_linear_multiplier)
             # Transformer layernorms.
             + (2 / args.hidden_size)
             # Final layernorm.
@@ -60,7 +69,7 @@ def compute_weight_and_optimizer_memory(args, verbose=False):
                 * query_projection_to_hidden_size_ratio
             )
             # MLP.
-            + ((args.ffn_hidden_size / args.hidden_size) * args.moe_router_topk * gated_linear_multiplier)
+            + ((intermediate_hidden_size / args.hidden_size) * args.moe_router_topk * gated_linear_multiplier + (shared_moe_ffn_hidden_size / args.hidden_size) * gated_linear_multiplier)
             # Transformer layernorms.
             + (2 / args.hidden_size)
             # Final layernorm.
