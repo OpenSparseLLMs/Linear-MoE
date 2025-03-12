@@ -101,7 +101,7 @@ class MoELayer(BaseMoELayer):
             mb_args = MegablocksArguments(
                 # ffn settings
                 hidden_size=self.config.hidden_size,
-                ffn_hidden_size=self.config.ffn_hidden_size,
+                ffn_hidden_size=self.config.moe_ffn_hidden_size,
                 bias=self.config.add_bias_linear,
                 return_bias=True,  # set to True for interface consistency
                 activation_fn=self.config.activation_func,
