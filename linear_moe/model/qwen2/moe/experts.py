@@ -71,14 +71,14 @@ class GroupedMLP(MegatronModule):
         else:
             tp_size = parallel_state.get_tensor_model_parallel_world_size()
 
-        fc1_output_size = self.config.ffn_hidden_size * self.num_local_experts
+        fc1_output_size = self.config.moe_ffn_hidden_size * self.num_local_experts
         if config.gated_linear_unit:
             # Project to 4h. If using swiglu double the output width,
             # see https://arxiv.org/pdf/2002.05202.pdf
             fc1_output_size *= 2
         fc1_output_size_per_partition = divide(fc1_output_size, tp_size)
 
-        fc2_input_size = self.config.ffn_hidden_size * self.num_local_experts
+        fc2_input_size = self.config.moe_ffn_hidden_size * self.num_local_experts
         fc2_input_size_per_partition = divide(fc2_input_size, tp_size)
 
         # Note: The current kernel implementations of grouped_gemm
