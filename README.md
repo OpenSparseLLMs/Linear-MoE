@@ -36,19 +36,19 @@ This repo aims to provide a **production-ready library** for modeling and traini
 # Overview
 
 <p align="center">
-  <img src="./images/linear-moe-fig1.png" width="80%" />
+  <img src="./images/linear-moe-fig2.png" width="90%" />
 </p>
 <div align="center">
-Linear-MoE System
+Linear-MoE Architecture
 </div>
 
 &nbsp;
 
 <p align="center">
-  <img src="./images/linear-moe-fig2.png" width="80%" />
+  <img src="./images/linear-moe-fig1.png" width="80%" />
 </p>
 <div align="center">
-Linear-MoE Model Architecture
+Linear-MoE System: Modeling and Training
 </div>
 
 # Installation
