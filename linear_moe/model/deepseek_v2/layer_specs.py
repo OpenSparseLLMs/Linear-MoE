@@ -28,6 +28,8 @@ from linear_moe.sequence_modeling.lightning_attention import LightningAttention
 from linear_moe.sequence_modeling.lasp2 import LASP2
 from linear_moe.sequence_modeling.rwkv6 import DDLerpLinear
 from linear_moe.sequence_modeling.rwkv6 import RWKV6
+from linear_moe.sequence_modeling.rwkv7 import RWKV7
+from linear_moe.sequence_modeling.rwkv7 import LoRA
 from linear_moe.sequence_modeling.hgrn2 import HGRN2
 from linear_moe.model.deepseek_v2.hybrid.hybrid_transformer_block import HybridTransformerBlock, HybridTransformerBlockSubmodules
 from linear_moe.sequence_modeling.ssm import MambaStack, MambaStackSubmodules
@@ -44,6 +46,8 @@ from .transformer_layer import TransformerLayer, TransformerLayerSubmodules
 from .rms_norm import DeepseekV2RMSNorm
 
 # Use this spec to use lower level Transformer Engine modules (required for fp8 training)
+
+
 def get_gpt_layer_with_transformer_engine_spec(
     num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
 ) -> ModuleSpec:
@@ -193,7 +197,6 @@ def get_hybrid_mamba2_linear_moe_layer_local_spec(
             ),
         ),
     )
-
 
 
 def get_hybrid_retention_linear_moe_layer_local_spec(
@@ -747,7 +750,7 @@ def get_hybrid_mom_gated_deltanet_linear_moe_layer_local_spec(
     mlp_dense = _get_mlp_module_spec(
         use_te=False, num_experts=None, moe_grouped_gemm=moe_grouped_gemm
     )
-    
+
     return ModuleSpec(
         module=HybridTransformerBlock,
         submodules=HybridTransformerBlockSubmodules(
@@ -940,7 +943,6 @@ def get_hybrid_basic_linear_attention_linear_moe_layer_local_spec(
     )
 
 
-
 def get_hybrid_rwkv6_linear_moe_layer_local_spec(
     num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
 ) -> ModuleSpec:
@@ -969,6 +971,75 @@ def get_hybrid_rwkv6_linear_moe_layer_local_spec(
                             g_proj=DDLerpLinear,
                             core_linear_rnn=RWKV6,
                             o_proj=nn.Linear,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm if num_experts else IdentityOp,
+                    input_layernorm=DeepseekV2RMSNorm if num_experts else IdentityOp,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                ),
+            ),
+            normal_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    self_attention=ModuleSpec(
+                        module=SelfAttention,
+                        params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=SelfAttentionSubmodules(
+                            linear_q_proj=ColumnParallelLinear,
+                            linear_q_a_proj=ColumnParallelLinear,
+                            linear_q_b_proj=ColumnParallelLinear,
+                            linear_kv_a_proj_with_mqa=ColumnParallelLinear,
+                            linear_kv_b_proj=ColumnParallelLinear,
+                            linear_proj=RowParallelLinear,
+                            q_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            kv_a_layernorm=DeepseekV2RMSNorm if qk_layernorm else IdentityOp,
+                            core_attention=DotProductAttention,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=DeepseekV2RMSNorm if num_experts else IdentityOp,
+                    input_layernorm=DeepseekV2RMSNorm if num_experts else IdentityOp,
+                    mlp=mlp,
+                    mlp_dense=mlp_dense,
+                    mlp_bda=get_bias_dropout_add,
+                ),
+            ),
+        ),
+    )
+
+
+def get_hybrid_rwkv7_linear_moe_layer_local_spec(
+    num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
+) -> ModuleSpec:
+    mlp = _get_mlp_module_spec(
+        use_te=False, num_experts=num_experts, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    mlp_dense = _get_mlp_module_spec(
+        use_te=False, num_experts=None, moe_grouped_gemm=moe_grouped_gemm
+    )
+
+    return ModuleSpec(
+        module=HybridTransformerBlock,
+        submodules=HybridTransformerBlockSubmodules(
+            linear_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    self_attention=ModuleSpec(
+                        module=LinearRNN,
+                        # params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=LinearRNNSubmodules(
+                            r_proj=nn.Linear,
+                            k_proj=nn.Linear,
+                            v_proj=nn.Linear,
+                            o_proj=nn.Linear,
+                            w_proj=LoRA,
+                            a_proj=LoRA,
+                            g_proj=LoRA,
+                            core_linear_rnn=RWKV7,
                         ),
                     ),
                     self_attn_bda=get_bias_dropout_add,

@@ -15,6 +15,7 @@
 from dataclasses import dataclass
 from megatron.core.transformer import TransformerConfig
 
+
 @dataclass
 class MixtralTransformerConfig(TransformerConfig):
 
@@ -58,39 +59,45 @@ class MixtralTransformerConfig(TransformerConfig):
     base_model: str = None
 
     la_feature_map: str = None
-    
+
     la_tie_feature_map_qk:  bool = False
-    
+
     la_norm_q:  bool = False
-    
+
     la_norm_k:  bool = False
-    
+
     la_do_feature_map_norm:  bool = False
-    
+
     la_output_norm:  str = None
 
     la_checkpointing:  bool = False
-    
+
     la_elementwise_affine: bool = True
-    
+
     la_norm_eps: float = 1e-5
-    
+
     gla_la_gate_logit_normalizer: int = 16
-    
+
     gla_la_gate_low_rank_dim: int = 16
-    
+
     gla_la_clamp_min: float = None
-    
+
     rwkv6_la_proj_low_rank_dim: int = 32
-    
+
     rwkv6_la_gate_low_rank_dim: int = 64
-    
+
+    rwkv_7_la_decay_low_rank_dim: int = 64
+
+    rwkv_7_la_gate_low_rank_dim: int = 128
+
+    rwkv_7_a_low_rank_dim: int = 64
+
     la_gate_fn: str = 'swish'
-    
+
     expand_k: float = 1.0
-    
+
     expand_v: float = 1.0
-    
+
     layer_type_list: str = None
 
     num_memories: int = 4

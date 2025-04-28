@@ -24,6 +24,8 @@ from linear_moe.sequence_modeling.deltanet import DeltaNet
 from linear_moe.sequence_modeling.gated_deltanet import GatedDeltaNet
 from linear_moe.sequence_modeling.rwkv6 import DDLerpLinear
 from linear_moe.sequence_modeling.rwkv6 import RWKV6
+from linear_moe.sequence_modeling.rwkv7 import RWKV7
+from linear_moe.sequence_modeling.rwkv7 import LoRA
 from linear_moe.sequence_modeling.hgrn2 import HGRN2
 from linear_moe.model.llama3.hybrid.hybrid_transformer_block import HybridTransformerBlock, HybridTransformerBlockSubmodules
 from linear_moe.sequence_modeling.ssm import MambaStack, MambaStackSubmodules
@@ -39,6 +41,8 @@ from .rms_norm import Llama3RMSNorm
 from .transformer_layer import TransformerLayer, TransformerLayerSubmodules
 
 # Use this spec to use lower level Transformer Engine modules (required for fp8 training)
+
+
 def get_gpt_layer_with_transformer_engine_spec(
     num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
 ) -> ModuleSpec:
@@ -805,7 +809,74 @@ def get_hybrid_rwkv6_linear_moe_layer_local_spec(
     )
 
 
+def get_hybrid_rwkv7_linear_moe_layer_local_spec(
+    num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
+) -> ModuleSpec:
+    mlp = _get_mlp_module_spec(
+        use_te=False, num_experts=num_experts, moe_grouped_gemm=moe_grouped_gemm
+    )
+    return ModuleSpec(
+        module=HybridTransformerBlock,
+        submodules=HybridTransformerBlockSubmodules(
+            linear_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=Llama3RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=LinearRNN,
+                        # params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=LinearRNNSubmodules(
+                            r_proj=nn.Linear,
+                            k_proj=nn.Linear,
+                            v_proj=nn.Linear,
+                            o_proj=nn.Linear,
+                            w_proj=LoRA,
+                            a_proj=LoRA,
+                            g_proj=LoRA,
+                            core_linear_rnn=RWKV7,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=Llama3RMSNorm,
+                    mlp=mlp,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+            normal_transformer_layer=ModuleSpec(
+                module=TransformerLayer,
+                submodules=TransformerLayerSubmodules(
+                    input_layernorm=Llama3RMSNorm,
+                    self_attention=ModuleSpec(
+                        module=SelfAttention,
+                        params={"attn_mask_type": AttnMaskType.causal},
+                        submodules=SelfAttentionSubmodules(
+                            linear_qkv=ColumnParallelLinear,
+                            core_attention=DotProductAttention,
+                            linear_proj=RowParallelLinear,
+                            q_layernorm=FusedLayerNorm if qk_layernorm else IdentityOp,
+                            k_layernorm=FusedLayerNorm if qk_layernorm else IdentityOp,
+                        ),
+                    ),
+                    self_attn_bda=get_bias_dropout_add,
+                    pre_mlp_layernorm=Llama3RMSNorm,
+                    mlp=mlp,
+                    mlp_bda=get_bias_dropout_add,
+                    sharded_state_dict_keys_map={
+                        'input_layernorm.': 'self_attention.linear_qkv.layer_norm_',
+                        'pre_mlp_layernorm.': 'mlp.linear_fc1.layer_norm_',
+                    },
+                ),
+            ),
+        ),
+    )
+
 # Use this spec for an implementation using only modules in megatron core
+
+
 def get_hybrid_hgrn2_linear_moe_layer_local_spec(
     num_experts: int = None, moe_grouped_gemm: bool = False, qk_layernorm: bool = False
 ) -> ModuleSpec:
@@ -869,6 +940,8 @@ def get_hybrid_hgrn2_linear_moe_layer_local_spec(
     )
 
 # Helper function to get module spec for MLP/MoE
+
+
 def _get_mlp_module_spec(
     use_te: bool = True, num_experts: int = None, moe_grouped_gemm: bool = False
 ) -> ModuleSpec:

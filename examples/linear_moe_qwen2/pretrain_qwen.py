@@ -39,6 +39,7 @@ from linear_moe.model.qwen2.layer_specs import (
     get_hybrid_lightning_attention_linear_moe_layer_local_spec,
     get_hybrid_lasp2_linear_moe_layer_local_spec,
     get_hybrid_rwkv6_linear_moe_layer_local_spec,
+    get_hybrid_rwkv7_linear_moe_layer_local_spec,
     get_hybrid_hgrn2_linear_moe_layer_local_spec,
     get_hybrid_mom_gla_linear_moe_layer_local_spec,
     get_hybrid_mom_gated_deltanet_linear_moe_layer_local_spec,
@@ -86,6 +87,8 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
             hybrid_transformer_layer_spec = get_hybrid_lasp2_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
         elif args.la_module == "rwkv6":
             hybrid_transformer_layer_spec = get_hybrid_rwkv6_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
+        elif args.la_module == "rwkv7":
+            hybrid_transformer_layer_spec = get_hybrid_rwkv7_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
         elif args.la_module == "hgrn2":
             hybrid_transformer_layer_spec = get_hybrid_hgrn2_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, args.qk_layernorm)
         elif args.la_module == "mom_gla":
