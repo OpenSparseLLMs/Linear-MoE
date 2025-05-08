@@ -39,6 +39,7 @@ from linear_moe.model.deepseek_v2.layer_specs import (
     get_hybrid_lightning_attention_linear_moe_layer_local_spec,
     get_hybrid_lasp2_linear_moe_layer_local_spec,
     get_hybrid_rwkv6_linear_moe_layer_local_spec,
+    get_hybrid_rwkv7_linear_moe_layer_local_spec,
     get_hybrid_hgrn2_linear_moe_layer_local_spec,
     get_hybrid_mom_gla_linear_moe_layer_local_spec,
     get_hybrid_mom_gated_deltanet_linear_moe_layer_local_spec,
@@ -51,6 +52,7 @@ from linear_moe.arguments import get_patch_args
 from linear_moe.tokenizer import get_tokenizer, build_tokenizer
 import torch._dynamo
 torch._dynamo.config.suppress_errors = True
+
 
 def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, MambaModel, megatron.legacy.model.GPTModel]:
     """Builds the model.
@@ -93,6 +95,8 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, Mamba
             hybrid_transformer_layer_spec = get_hybrid_lasp2_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, qk_layernorm=True)
         elif args.la_module == "rwkv6":
             hybrid_transformer_layer_spec = get_hybrid_rwkv6_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, qk_layernorm=True)
+        elif args.la_module == "rwkv7":
+            hybrid_transformer_layer_spec = get_hybrid_rwkv7_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, qk_layernorm=True)   
         elif args.la_module == "hgrn2":
             hybrid_transformer_layer_spec = get_hybrid_hgrn2_linear_moe_layer_local_spec(args.num_experts, args.moe_grouped_gemm, qk_layernorm=True)
         elif args.la_module == "mom_gla":
@@ -183,6 +187,7 @@ def get_batch(data_iterator):
         raise ValueError("please set correct --dataset ")
 
     return batch.values()
+
 
 def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
     """Loss function.

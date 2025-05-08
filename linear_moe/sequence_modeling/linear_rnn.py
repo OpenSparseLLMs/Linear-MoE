@@ -3,6 +3,7 @@ from typing import Optional, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 from einops import rearrange
 from megatron.core.transformer.module import MegatronModule
 from megatron.core.transformer.spec_utils import ModuleSpec, build_module
@@ -10,6 +11,7 @@ from megatron.core.transformer.transformer_config import TransformerConfig
 from megatron.core.transformer.enums import AttnMaskType
 from linear_moe.model.common_modules.activations import ACT2FN, swish
 from linear_moe.sequence_modeling.rwkv6 import LerpLinear
+from fla.modules.l2norm import l2_norm
 
 
 @dataclass
@@ -22,6 +24,7 @@ class LinearRNNSubmodules:
     q_proj: Union[ModuleSpec, type] = None
     f_proj: Union[ModuleSpec, type] = None
     i_proj: Union[ModuleSpec, type] = None
+    a_proj: Union[ModuleSpec, type] = None
     core_linear_rnn: Union[ModuleSpec, type] = None
     o_proj: Union[ModuleSpec, type] = None
 
@@ -107,7 +110,80 @@ class LinearRNN(MegatronModule):
                 expand_k=self.config.expand_k,
                 expand_v=self.config.expand_v,
             )
-            
+
+        elif self.la_module == 'rwkv7':
+
+            self.x = nn.Parameter(torch.zeros(6, self.hidden_size))
+
+            self.r_proj = build_module(
+                submodules.r_proj,
+                self.hidden_size,
+                self.key_dim,
+                bias=False
+            )
+
+            self.k_proj = build_module(
+                submodules.k_proj,
+                self.hidden_size,
+                self.key_dim,
+                bias=False
+            )
+
+            self.v_proj = build_module(
+                submodules.v_proj,
+                self.hidden_size,
+                self.value_dim,
+                bias=False
+            )
+
+            self.o_proj = build_module(
+                submodules.o_proj,
+                self.value_dim,
+                self.hidden_size,
+                bias=False
+            )
+
+            self.w_proj = build_module(
+                submodules.w_proj,
+                self.config,
+                self.hidden_size,
+                self.key_dim,
+                low_rank_dim=config.rwkv7_la_decay_low_rank_dim,
+                activation='tanh'
+            )
+
+            self.a_proj = build_module(
+                submodules.a_proj,
+                self.config,
+                self.hidden_size,
+                self.key_dim,
+                low_rank_dim=config.rwkv7_la_a_low_rank_dim,
+                activation=None
+            )
+
+            self.g_proj = build_module(
+                submodules.g_proj,
+                self.config,
+                self.hidden_size,
+                self.value_dim,
+                low_rank_dim=config.rwkv7_la_gate_low_rank_dim,
+                activation='sigmoid'
+            )
+
+            self.bonus = nn.Parameter(torch.zeros(
+                self.num_heads, self.head_qk_dim))
+
+            self.booster = nn.Parameter(torch.zeros(self.key_dim))
+
+            self.removal = nn.Parameter(torch.zeros(self.key_dim))
+
+            self.core_linear_rnn = build_module(
+                submodules.core_linear_rnn,
+                config=self.config,
+                expand_k=self.config.expand_k,
+                expand_v=self.config.expand_v,
+            )
+
         elif self.la_module == 'hgrn2':
             self.q_proj = build_module(
                 submodules.q_proj,
@@ -191,7 +267,52 @@ class LinearRNN(MegatronModule):
             )
             # expect computation in [n b (h d)]
             o = o * self.la_gate_fn(rearrange(g, 'b n (h d) -> n b (h d)', h=self.num_heads))
-        
+
+        elif self.la_module == 'rwkv7':
+            batch_size, seq_len, hidden_size = hidden_states.shape
+            if attention_mask is not None:
+                hidden_states = hidden_states.mul_(attention_mask.unsqueeze(-1))
+            shifted = self.time_shift(hidden_states)
+
+            delta = shifted - hidden_states
+            xr, xw, xk, xv, xa, xg = hidden_states.addcmul(
+                delta, self.x.view(6, 1, 1, -1)).unbind(0)
+
+            r = self.r_proj(xr)
+            w = -math.exp(-0.5) * self.w_proj(xw).to(torch.float).sigmoid()
+            k = self.k_proj(xk)
+            v = self.v_proj(xv)
+
+            a = self.a_proj(xa).sigmoid()
+            g = self.g_proj(xg)
+
+            # the separate removal key
+            kk = l2_norm((k * self.removal).view(batch_size, seq_len, self.num_heads, -1)).view(batch_size, seq_len, -1)
+            # the separate adding key
+            k = k.addcmul(k * (a - 1), self.booster)
+            # dealing with left-padding
+            if attention_mask is not None:
+                v = v * attention_mask[:, -v.shape[-2]:, None]
+
+            r, w, k, v, kk, a = map(lambda x: rearrange(x, 'b t (h d) -> b t h d', d=self.head_dim), (r, w, k, v, kk, a))
+
+            scale = 1.0
+
+            o = self.core_linear_rnn(
+                r,
+                w,
+                k,
+                v,
+                -kk,
+                kk * a,
+                scale,
+            )
+
+            o = o + ((r * k * self.bonus).sum(-1, keepdim=True) * v).view(batch_size, seq_len, -1)
+
+            # expect computation in [n b (h d)]
+            o = o * self.la_gate_fn(rearrange(g, 'b n (h d) -> n b (h d)', h=self.num_heads))
+
         elif self.la_module == 'hgrn2':
             q = self.q_proj(hidden_states)
             f = self.f_proj(hidden_states)
