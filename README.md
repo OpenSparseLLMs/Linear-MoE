@@ -10,6 +10,13 @@ This repo aims to provide a **production-ready library** for modeling and traini
 
 <!-- It supports state-of-the-art open-source Mixture of Experts (MoE) models, seamlessly integrated with advanced linear sequence modeling techniques such as Linear Attention, State Space Modeling, and Linear RNN. LInear-MoE is still under development, **Contributions through pull requests are highly encouraged!** -->
 
+
+## News
+- **$\texttt{[2025-04]}$:** 🥳 Linear-MoE paper has been accepted by SCOPE Workshop@ICLR 2025 as an Oral Paper and wins the Outstanding Paper Honorable Mention Award.
+- **$\texttt{[2025-03]}$:** 🥳 Add [MoM](https://arxiv.org/abs/2502.13685) (with Gated DeltaNet) and [MoM](https://arxiv.org/abs/2502.13685) (with GLA) into Linear-MoE codebase.
+- **$\texttt{[2025-03]}$:** 🥳 Linear-MoE [Technical Report](https://arxiv.org/abs/2503.05447) is released.
+
+
 # Model Matrix
 
 |   Linear Sequence Modeling  |  Instance  |  Qwen2 MoE (@Alibaba)  |    Deepseek v2 MoE (@Deepseek)       |    Mixtral MoE (@Mistral AI)   | Llama3 (@Meta)   |
@@ -45,7 +52,7 @@ Linear-MoE Architecture
 &nbsp;
 
 <p align="center">
-  <img src="./images/linear-moe-fig1.png" width="80%" />
+  <img src="./images/linear-moe-fig1.png" width="70%" />
 </p>
 <div align="center">
 Linear-MoE System: Modeling and Training
