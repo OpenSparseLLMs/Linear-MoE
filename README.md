@@ -210,7 +210,7 @@ We use [EleutherAI/lm-evaluation-harness](https://github.com/EleutherAI/lm-evalu
 
 
 # Acknowledgement
-We built this repo upon [alibaba/PAI-Megatron-Patch](https://github.com/alibaba/Pai-Megatron-Patch), and take [Megatron-Core](https://github.com/NVIDIA/Megatron-LM) as the training engine. We use the triton-implemented linear attention kernels from [fla-org/flash-linear-attention](https://github.com/fla-org/flash-linear-attention), and CUDA implemented Mamba2 kernel from [state-spaces/mamba](https://github.com/state-spaces/mamba) to accelerate the execution.
+We built this repo upon [alibaba/PAI-Megatron-Patch](https://github.com/alibaba/Pai-Megatron-Patch), using [Megatron-Core](https://github.com/NVIDIA/Megatron-LM) as the backend training engine. We integrate the triton-implemented linear attention kernels from [fla-org/flash-linear-attention](https://github.com/fla-org/flash-linear-attention), and Mamba2 kernel from [state-spaces/mamba](https://github.com/state-spaces/mamba) to maximize the hardware efficiency.
 
 # Citation
 If you find this repo useful, please consider citing our work:
